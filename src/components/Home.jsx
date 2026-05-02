@@ -1,6 +1,6 @@
 import React from 'react'
 import { assets, camping, construction, elecrical, electronics,} from '../assets/assets'
-import Location from './Location'
+import Location from './Location.jsx'
 
 const Home = ({ theme }) => {
   return (
