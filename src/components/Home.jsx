@@ -5,8 +5,8 @@ import Location from './Location.jsx'
 const Home = ({ theme }) => {
   return (
     <div >
-        <div id='Home' className='grid grid-flow-col-1 lg:grid-flow-col gap-2  max-sm:w-auto max-sm:items-center max-sm:row-span-1 mx-10  '>
-                <div class="text-shadow-lg/30 text-8xl py-6 dark:text-white">
+        <div id='Home' className='grid grid-flow-col-1 lg:grid-flow-col  max-sm:w-auto max-sm:items-center max-sm:row-span-1 mx-10'>
+                <div class="text-shadow-lg/30 text-7xl lg:text-8xl py-6 dark:text-white">
                 Rent Without <br /> Limits.
             </div>
             <div className='text-mediam dark:text-white'>
@@ -18,14 +18,14 @@ const Home = ({ theme }) => {
                 Rent
                 </button>
             </div>
-            <div class="flex flex-nowrap gap-5  justify-start">
+            <div class="flex flex-nowrap gap-5 mt-5 lg:justify-start justify-center">
                 <a href="#"><img src={assets.instagram} className='hover:scale-115 w-10 l-10' alt="" /></a>
                 <a href="#"><img src={assets.fb} className='hover:scale-110 w-10 l-10' alt="" /></a>
                 <a href="#"><img src={assets.whatsapp} className='hover:scale-115 w-10 l-10' alt="" /></a>
             </div>
 
             <div class=" row-span-4">
-                <img src={assets.backbaground} className='w-162.5 shadow-xl/80 backdrop-blur-xl rotate-x-20 rotate-z-10 hover:-rotate-9 mt-10' alt="" />
+                <img src={assets.backbaground} className='w-162.5 shadow-xl/80 backdrop-blur-xl max-sm:-rotate-10 -rotate-20 rotate-z-10 lg:hover:-rotate-9 mt-10 ' alt="" />
             </div>
         </div>
 
