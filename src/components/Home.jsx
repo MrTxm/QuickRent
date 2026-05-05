@@ -105,8 +105,8 @@ const Home = ({ theme }) => {
         </div>
 
         <div id='About' className="mt-16 px-6 lg:px-20">
-            <h1 className='text-4xl text-center  lg:text-7xl lg:text-left mt-10 dark:text-white'>About Us</h1><br />
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-10 items-start dark:text-white">
+            <h1 className='text-4xl text-center  lg:text-7xl lg:text-center mt-10 dark:text-white'>About</h1><br />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-10 items-start dark:text-white">
                     <div class="text-justify m-5">
                         <p className="text-base lg:text-lg text-justify">
                             At QuickRent, we redefine equipment rental with precision and excellence.
@@ -129,6 +129,12 @@ const Home = ({ theme }) => {
                         <Location />
                     </div>
                 </div>
+        </div>
+        <div id='Contact' className="mt-16 px-6 lg:px-20">
+            <h1 className='text-4xl text-center  lg:text-7xl lg:text-center mt-10 dark:text-white'>Contact Us</h1><br />
+            <div className='grid grid-cols-1 lg:grid-cols-1'>
+
+            </div>
         </div>
     </div>
   )

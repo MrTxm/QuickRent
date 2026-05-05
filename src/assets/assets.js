@@ -13,6 +13,7 @@ import downw from './downw.png'
 import downb from './downb.png'
 import scribble from './scribble.webp'
 import about from './about.png.avif'
+import contact from './contact.png'
 
 
 
@@ -29,7 +30,8 @@ export const assets ={
     downw,
     downb,
     scribble,
-    about
+    about,
+    contact
 }
 
 // camping equipment images
