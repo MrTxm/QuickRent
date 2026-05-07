@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Navbar from './components/Navbar.jsx'
 import Home from './components/Home.jsx'
+import Footer from './components/Footer.jsx'
 
 const App = () => {
 
@@ -10,9 +11,8 @@ const App = () => {
   return (
     <div className='dark:bg-black '>
       <Navbar theme={theme} setTheme={setTheme}/>
-      <div className='mt-20'>
         <Home theme={theme}/>
-      </div>
+      <Footer/>
     </div>
   )
 }

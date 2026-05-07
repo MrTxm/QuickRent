@@ -1,10 +1,11 @@
 import React from 'react'
 import { assets, camping, construction, elecrical, electronics,} from '../assets/assets'
 import Location from './Location.jsx'
+import Footer from './Footer.jsx'
 
 const Home = ({ theme }) => {
   return (
-    <div >
+    <div className='mt-20' >
         <div id='Home' className='grid grid-flow-col-1 lg:grid-flow-col  max-sm:w-auto max-sm:items-center max-sm:row-span-1 mx-10'>
                 <div class="text-shadow-lg/30 text-7xl lg:text-8xl py-6 dark:text-white">
                 Rent Without <br /> Limits.
@@ -158,9 +159,7 @@ const Home = ({ theme }) => {
                                 <a href="tel:+94741287118">Call Us</a>
                             </h1>
                     </div>
-                    
                 </div>
-
             </div>
         </div>
     </div>
