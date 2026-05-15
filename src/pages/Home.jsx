@@ -1,8 +1,8 @@
 import React from 'react'
-import { assets, camping, construction, elecrical, electronics,} from '../assets/assets'
+import { assets, camping, construction, elecrical, electronics,} from '../assets/assets.js'
 import { useNavigate } from "react-router-dom";
-import Location from './Location.jsx'
-import Footer from './Footer.jsx'
+import Location from '../components/Location.jsx'
+import Footer from '../components/Footer.jsx'
 
 const Home = ({ theme }) => {
 
