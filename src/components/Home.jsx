@@ -1,9 +1,13 @@
 import React from 'react'
 import { assets, camping, construction, elecrical, electronics,} from '../assets/assets'
+import { useNavigate } from "react-router-dom";
 import Location from './Location.jsx'
 import Footer from './Footer.jsx'
 
 const Home = ({ theme }) => {
+
+    const navigate = useNavigate();
+
   return (
     <div className='mt-20' >
         <div id='Home' className='grid grid-flow-col-1 lg:grid-flow-col  max-sm:w-auto max-sm:items-center max-sm:row-span-1 mx-10'>
@@ -44,7 +48,8 @@ const Home = ({ theme }) => {
                                 Adventure Collection</h2>
                                 <p className="text-sm sm:text-base lg:text-lg pt-4 dark:text-white">
                                 Refined camping essentials crafted to elevate every outdoor experience</p>
-                            <button className="mt-6 text-sm bg-mainbtn text-black px-8 py-3 rounded-full hover:scale-105 transition-all">
+                            <button onClick={() => navigate(`/category/6a030f1f5a7bb163f1adf62c`)}
+                            className="mt-6 text-sm bg-mainbtn text-black px-8 py-3 rounded-full hover:scale-105 transition-all">
                                 Explore Collection
                             </button>
                     </div>
