@@ -12,12 +12,16 @@ dotenv.config();
 const app = express();
 const path = require("path");
 
-
 app.use(cors());
 app.use(express.json());
-app.use("/images", express.static(path.join(__dirname, "public/images")));
+
+app.use("/images", express.static(path.join(__dirname, "public", "images")));
+
+
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
+
+
 
 
 

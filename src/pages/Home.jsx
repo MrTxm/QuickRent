@@ -48,7 +48,7 @@ const Home = ({ theme }) => {
                                 Adventure Collection</h2>
                                 <p className="text-sm sm:text-base lg:text-lg pt-4 dark:text-white">
                                 Refined camping essentials crafted to elevate every outdoor experience</p>
-                            <button onClick={() => navigate(`/category/6a030f1f5a7bb163f1adf62c`)}
+                            <button onClick={() => navigate(`/category/6a031307b90644d5bdb7a430`)}
                             className="mt-6 text-sm bg-mainbtn text-black px-8 py-3 rounded-full hover:scale-105 transition-all">
                                 Explore Collection
                             </button>

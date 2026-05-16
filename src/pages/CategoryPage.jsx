@@ -7,15 +7,22 @@ const CategoryPage = () => {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:5000/api/products/category/${categoryId}`)
-      .then((res) => setProducts(res.data))
-      .catch((err) => console.log(err));
-  }, [categoryId]);
+  console.log("Category ID from URL:", categoryId);
+
+  axios
+    .get(`http://localhost:5000/api/products/category/${categoryId}`)
+    .then((res) => {
+       console.log("API RESPONSE:", res.data);
+      setProducts(res.data);
+    })
+    .catch((err) => console.log(err));
+}, [categoryId]);
 
   return (
     <div className="p-10">
       <h1 className="text-3xl mb-8">Products</h1>
+
+    {products.length === 0 && <p>No products found</p>}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {products.map((product) => (
@@ -25,8 +32,8 @@ const CategoryPage = () => {
           >
             <img
               src={`http://localhost:5000${product.image}`}
-              alt={product.name}
-              className="w-full h-48 object-cover rounded-lg"
+              alt={''}
+              className="w-full h-90 object-cover rounded-lg"
             />
             <h2 className="mt-4 text-lg font-semibold">
               {product.name}

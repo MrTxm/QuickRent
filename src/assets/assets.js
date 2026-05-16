@@ -53,7 +53,7 @@ import torch from './camping/light.jpg'
 import gasstove from './camping/Piezo_and_Jetboil.jpg'
 import chair from './camping/reg_chair.webp'
 import stv from './camping/stv.jpg'
-import tent2 from './camping/tent2.jpg'
+
 import tent3 from './camping/tent3.avif'
 import dbl6 from './camping/tent6dbl.webp'
 import trtent2 from './camping/tent22.webp'
@@ -70,7 +70,7 @@ export const camping={
     gasstove,
     chair,
     stv,
-    tent2,
+
     tent3,
     dbl6,
     trtent2
