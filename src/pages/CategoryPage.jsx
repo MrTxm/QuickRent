@@ -28,7 +28,7 @@ const CategoryPage = () => {
         {products.map((product) => (
           <div
             key={product._id}
-            className="bg-white shadow-lg rounded-xl p-4"
+            className="bg-white shadow-lg/30 rounded-xl p-4"
           >
             <img
               src={`http://localhost:5000${product.image}`}
