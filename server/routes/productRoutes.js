@@ -14,7 +14,7 @@ router.get("/category/:categoryId", async (req, res) => {
 
     const products = await Product.find({
       category: categoryId
-    });
+    }).sort({ product_id: 1 });
 
     res.json(products);
   } catch (error) {
