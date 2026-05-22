@@ -85,7 +85,8 @@ const Home = ({ theme }) => {
                                 Power Tools Collection</h2>
                                 <p className="text-sm sm:text-base lg:text-lg pt-4 dark:text-white">
                                High-performance tools crafted for precision and control.</p>
-                            <button className="mt-6 text-sm bg-mainbtn text-black px-8 py-3 rounded-full hover:scale-105 transition-all">
+                            <button onClick={() => navigate(`/category/6a0346907400c67351887ad4`)}
+                            className="mt-6 text-sm bg-mainbtn text-black px-8 py-3 rounded-full hover:scale-105 transition-all">
                                 Explore Collection
                             </button>
                     </div>
