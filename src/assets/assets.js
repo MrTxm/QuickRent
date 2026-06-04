@@ -17,7 +17,8 @@ import contact from './contact.png'
 import gmailbg from './gmailbg.jpg'
 import wbg from './whatsappbg.jpg'
 import call from './callbg.jpg'
-
+import cart from './ecommerce.png'
+import whist from './add-to-favorite.png'
 
 
 export const assets ={
@@ -37,7 +38,9 @@ export const assets ={
     contact,
     gmailbg,
     wbg,
-    call
+    call,
+    cart,
+    whist
 }
 
 // camping equipment images

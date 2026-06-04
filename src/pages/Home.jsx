@@ -101,7 +101,8 @@ const Home = ({ theme }) => {
                         </h2>
                         <p className='text-sm sm:text-base lg:text-lg pt-4 dark:text-white'>
                             Advanced technology designed for seamless productivity.</p>
-                        <button className='mt-6 text-sm bg-mainbtn text-black px-8 py-3 rounded-full hover:scale-105 transition-all'>
+                        <button onClick={() => navigate(`/category/6a0346c77400c67351887ad5`)}
+                        className='mt-6 text-sm bg-mainbtn text-black px-8 py-3 rounded-full hover:scale-105 transition-all'>
                             Explore Collection
                         </button>
                     </div>
