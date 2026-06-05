@@ -1,8 +1,18 @@
 import React, { useState } from 'react'
 import {assets} from '../assets/assets'
 import Themetoggle from './Themetoggle.jsx'
+import { useContext } from "react";
+import { CartContext } from "../context/CartContext";
+import CartSidebar from "./CartSidebar";
+import AuthModal from "./AuthModal";
 
 const Navbar = ({theme, setTheme}) => {
+
+  const { cartItems } = useContext(CartContext);
+  console.log("Navbar Cart:", cartItems);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  console.log("showAuth =", showAuth);
 
   const[sidebarOpen, setSidebarOpen] = useState(false)
   return (
@@ -24,15 +34,34 @@ const Navbar = ({theme, setTheme}) => {
             <a onClick={()=>setSidebarOpen(false)} href='#Contact' className='sm:hover:border-b'>Contact Us</a>
         </div>
 
-        <div className='flex items-center gap-2 sm:gap-2'>
+        <div className='flex items-center lg:gap-4 sm:gap-2'>
           
           <Themetoggle theme={theme} setTheme={setTheme} />
-          <img src={theme === 'dark' ? assets.bar : assets.bar} alt="" onClick={()=>setSidebarOpen(true)} className='w-8 sm:hidden'/>
-
-            <a href="#" className='text-sm max-sm:hidden flex items-center bg-primary text-black px-6 py-2
-        rounded-full cursor-pointer hover:scale-103 transition-all'>Login</a>
+          <div className="relative">
+            <button onClick={() => setCartOpen(true)}>
+              <img src={assets.cartIcon} className='h-9 w-10' alt="" />
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full px-2 text-xs">
+                  {cartItems.length}
+                </span>
+            </button>
         </div>
+          <img src={theme === 'dark' ? assets.bar : assets.bar} alt="" onClick={()=>setSidebarOpen(true)} className='w-8 sm:hidden'/>
+          <button onClick={() => setShowAuth(true)}>
+            <a href="#" className='text-sm max-sm:hidden flex items-center bg-primary text-black px-6 py-2
+          rounded-full cursor-pointer hover:scale-103 transition-all'>Login</a>
+          </button>
+            
+        </div>
+        <CartSidebar
+              isOpen={cartOpen}
+              onClose={() => setCartOpen(false)}
+              cartItems={cartItems}
+            />
+            {showAuth && (
+  <AuthModal onClose={() => setShowAuth(false)} />
+)}
     </div>
+    
   )
 }
 

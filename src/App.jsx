@@ -4,6 +4,7 @@ import Home from "./pages/Home.jsx";
 import Footer from "./components/Footer.jsx";
 import { Routes, Route } from "react-router-dom";
 import CategoryPage from "./pages/CategoryPage";
+import AuthModal from "./components/AuthModal";
 
 const App = () => {
   const [theme, setTheme] = useState(
@@ -15,6 +16,7 @@ const App = () => {
   return (
     <div className="dark:bg-black">
       <Navbar theme={theme} setTheme={setTheme} />
+      
 
       <Routes>
         <Route path="/" element={<Home theme={theme} />} />

@@ -1,11 +1,23 @@
 import React, { useState } from "react";
 
-const AuthModal = () => {
+const AuthModal = ({ onClose }) => {
   const [isSignup, setIsSignup] = useState(false);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-[90%] max-w-5xl flex">
+        <div
+  className="fixed top-0 left-0 w-screen h-screen z-[9999] bg-black/50 flex items-center justify-center"
+  onClick={onClose}
+>
+      <div
+  className="relative bg-white rounded-3xl shadow-2xl overflow-hidden w-[90%] max-w-5xl flex"
+  onClick={(e) => e.stopPropagation()}
+>
+  <button
+    onClick={onClose}
+    className="absolute top-4 right-4 text-3xl font-bold text-gray-500 hover:text-black"
+  >
+    ×
+  </button>
         
         {/* Left Side */}
         <div className="w-1/2 bg-blue-600 text-white p-10 flex flex-col justify-center items-center">

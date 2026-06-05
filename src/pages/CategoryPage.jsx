@@ -3,10 +3,14 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { assets } from '../assets/assets'
 import { FaHeart } from "react-icons/fa";
+import { useContext } from "react";
+import { CartContext } from "../context/CartContext";
+
 
 const CategoryPage = () => {
   const { categoryId } = useParams();
   const [products, setProducts] = useState([]);
+  const { addToCart, cartItems } = useContext(CartContext);
 
   useEffect(() => {
   console.log("Category ID from URL:", categoryId);
@@ -53,7 +57,12 @@ const CategoryPage = () => {
                     rounded-full cursor-pointer hover:scale-103 hover:border-hvrbtn transition-all'>
                 See preview
               </button>
-              <button className='text-sm  flex content-center bg-mainbtn  text-black   px-5 py-2.5 m-auto w-auto
+              <button  onClick={() => {
+    console.log("Button clicked");
+    console.log(product);
+    addToCart(product);
+  }}
+                className='text-sm  flex content-center bg-mainbtn  text-black   px-5 py-2.5 m-auto w-auto
                     rounded-full cursor-pointer hover:scale-103 hover:border-hvrbtn transition-all'>
                 <img src={assets.cart} className="w-8 h-8" alt="" />
               </button>
