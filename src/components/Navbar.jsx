@@ -5,6 +5,7 @@ import { useContext } from "react";
 import { CartContext } from "../context/CartContext";
 import CartSidebar from "./CartSidebar";
 import AuthModal from "./AuthModal";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = ({theme, setTheme}) => {
 
@@ -13,8 +14,16 @@ const Navbar = ({theme, setTheme}) => {
   const [cartOpen, setCartOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   console.log("showAuth =", showAuth);
+  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   const[sidebarOpen, setSidebarOpen] = useState(false)
+  const handleSearch = () => {
+  if (!searchTerm.trim()) return;
+
+  navigate(`/search/${searchTerm}`);
+};
+
   return (
     <div className='flex justify-between items-center px-4 
     sm:px-12 lg:px-24 xl:px-40 py-4 sticky top-0 z-20
@@ -32,6 +41,21 @@ const Navbar = ({theme, setTheme}) => {
             <a onClick={()=>setSidebarOpen(false)} href='#Service' className='sm:hover:border-b'>Service</a>
             <a onClick={()=>setSidebarOpen(false)} href='#About' className='sm:hover:border-b'>About</a>
             <a onClick={()=>setSidebarOpen(false)} href='#Contact' className='sm:hover:border-b'>Contact Us</a>
+        </div>
+        <div className="border rounded-full px-4 py-2 text-white">
+            <input
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            
+          />
+          <button
+  onClick={handleSearch}
+  className="bg-primary px-4 py-2 rounded-full text-black"
+>
+  🔍︎
+</button>
         </div>
 
         <div className='flex items-center lg:gap-4 sm:gap-2'>

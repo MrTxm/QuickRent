@@ -7,7 +7,7 @@ const CartSidebar = ({ isOpen, onClose, cartItems }) => {
     <>
       {/* Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 z-40 ${
+        className={`absolute inset-0 bg-black/50 z-40 ${
           isOpen ? "block" : "hidden"
         }`}
         onClick={onClose}
@@ -15,7 +15,7 @@ const CartSidebar = ({ isOpen, onClose, cartItems }) => {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white z-50 shadow-xl transform transition-transform duration-300
+        className={`absolute top-0 right-0 h-full w-full sm:w-[400px] bg-white z-50 shadow-xl transform transition-transform duration-300
         ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="p-5 h-full flex flex-col">

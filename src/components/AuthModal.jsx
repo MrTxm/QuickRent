@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import {assets} from "../assets/assets.js";
 
 const AuthModal = ({ onClose }) => {
   const [isSignup, setIsSignup] = useState(false);
@@ -20,16 +21,12 @@ const AuthModal = ({ onClose }) => {
   </button>
         
         {/* Left Side */}
-        <div className="w-1/2 bg-blue-600 text-white p-10 flex flex-col justify-center items-center">
+        <div className="w-1/2 bg-secondary text-white p-10 flex flex-col justify-center items-center">
           <img
-            src="/logo.png"
+            src={assets.logo}
             alt="Logo"
-            className="w-28 h-28 object-contain mb-6"
+            className="w-50 h-40 object-contain mb-6"
           />
-
-          <h1 className="text-4xl font-bold mb-4">
-            QuickRent
-          </h1>
 
           <p className="text-center text-lg">
             Welcome to QuickRent.

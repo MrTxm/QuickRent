@@ -20,7 +20,7 @@ const Home = ({ theme }) => {
                 All in one refined platform. <br /><br />
                 <button className='text-sm  flex lg:content-start bg-mainbtn  text-black  px-25 py-2.5 m-auto
                     rounded-full cursor-pointer hover:scale-103 hover:border-hvrbtn transition-all'>
-                Rent
+                <a href='#Service'>Rent</a> 
                 </button>
             </div>
             <div class="flex flex-nowrap gap-5 mt-5 lg:justify-start justify-center">
@@ -48,7 +48,7 @@ const Home = ({ theme }) => {
                                 Adventure Collection</h2>
                                 <p className="text-sm sm:text-base lg:text-lg pt-4 dark:text-white">
                                 Refined camping essentials crafted to elevate every outdoor experience</p>
-                            <button onClick={() => navigate(`/category/6a031307b90644d5bdb7a430`)}
+                            <button onClick={() => navigate(`/category/1`)}
                             className="mt-6 text-sm bg-mainbtn text-black px-8 py-3 rounded-full hover:scale-105 transition-all">
                                 Explore Collection
                             </button>
@@ -64,7 +64,7 @@ const Home = ({ theme }) => {
                         </h2>
                         <p className='text-sm sm:text-base lg:text-lg pt-4 dark:text-white'>
                             Engineered machinery and equipment built to support strength, precision, and reliability on every project.</p>
-                        <button onClick={() => navigate(`/category/6a0346137400c67351887ad3`)}
+                        <button onClick={() => navigate(`/category/2`)}
                         className='mt-6 text-sm bg-mainbtn text-black px-8 py-3 rounded-full hover:scale-105 transition-all'>
                             Explore Collection
                         </button>
@@ -85,7 +85,7 @@ const Home = ({ theme }) => {
                                 Power Tools Collection</h2>
                                 <p className="text-sm sm:text-base lg:text-lg pt-4 dark:text-white">
                                High-performance tools crafted for precision and control.</p>
-                            <button onClick={() => navigate(`/category/6a0346907400c67351887ad4`)}
+                            <button onClick={() => navigate(`/category/3`)}
                             className="mt-6 text-sm bg-mainbtn text-black px-8 py-3 rounded-full hover:scale-105 transition-all">
                                 Explore Collection
                             </button>
@@ -101,7 +101,7 @@ const Home = ({ theme }) => {
                         </h2>
                         <p className='text-sm sm:text-base lg:text-lg pt-4 dark:text-white'>
                             Advanced technology designed for seamless productivity.</p>
-                        <button onClick={() => navigate(`/category/6a0346c77400c67351887ad5`)}
+                        <button onClick={() => navigate(`/category/4`)}
                         className='mt-6 text-sm bg-mainbtn text-black px-8 py-3 rounded-full hover:scale-105 transition-all'>
                             Explore Collection
                         </button>

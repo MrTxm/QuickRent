@@ -5,6 +5,7 @@ import Footer from "./components/Footer.jsx";
 import { Routes, Route } from "react-router-dom";
 import CategoryPage from "./pages/CategoryPage";
 import AuthModal from "./components/AuthModal";
+import SearchResults from "./pages/SearchResults";
 
 const App = () => {
   const [theme, setTheme] = useState(
@@ -21,6 +22,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Home theme={theme} />} />
         <Route path="/category/:categoryId" element={<CategoryPage />} />
+        <Route path="/search/:keyword" element={<SearchResults />} />
       </Routes>
 
       <Footer />

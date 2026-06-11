@@ -6,40 +6,40 @@ import { FaHeart } from "react-icons/fa";
 import { useContext } from "react";
 import { CartContext } from "../context/CartContext";
 
+const SearchResults = () => {
+    const { addToCart} = useContext(CartContext);
+  const { keyword } = useParams();
 
-const CategoryPage = () => {
-  const { categoryId } = useParams();
   const [products, setProducts] = useState([]);
-  const { addToCart, cartItems } = useContext(CartContext);
 
   useEffect(() => {
-  console.log("Category ID from URL:", categoryId);
-
-  axios
-    .get(`http://localhost:5000/api/products/category/${categoryId}`)
-    .then((res) => {
-       console.log("API RESPONSE:", res.data);
-      setProducts(res.data);
-    })
-    .catch((err) => console.log(err));
-}, [categoryId]);
+    axios
+      .get(
+        `http://localhost:5000/api/products/search/${keyword}`
+      )
+      .then((res) => {
+        setProducts(res.data);
+      })
+      .catch(console.log);
+  }, [keyword]);
 
   return (
     <div className="p-10">
-      <h1 className="text-3xl mb-8">Products</h1>
+      <h1 className="text-3xl mb-8">
+        Search Results
+      </h1>
 
-    {products.length === 0 && <p>No products found</p>}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4  gap-8">
-        {products.map((product) => (
-          <div
-            key={product._id}
-            className="relative bg-white shadow-lg/30 rounded-xl p-4"
-          >
-            <button className="absolute top-3 right-3 bg-primary p-2 rounded-full shadow-md hover:scale-110 transition">
-                <FaHeart className="text-black-400 hover:text-red-500 text-3xl" />
-            </button>
-            <img
+      {products.length === 0 ? (
+        <p>No products found</p>
+      ) : (
+        <div className="grid grid-cols-4 gap-8">
+          {products.map((product) => (
+            <div key={product._id}
+            className="relative bg-white shadow-lg/30 rounded-xl p-4" >
+                <button className="absolute top-3 right-3 bg-primary p-2 rounded-full shadow-md hover:scale-110 transition">
+                                <FaHeart className="text-black-400 hover:text-red-500 text-3xl" />
+                            </button>
+              <img
               src={`http://localhost:5000${product.image}`}
               alt={''}
               className="w-full h-90 object-cover rounded-lg"
@@ -63,11 +63,12 @@ const CategoryPage = () => {
                 <img src={assets.cart} className="w-8 h-8" alt="" />
               </button>
             </div>
-          </div>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default CategoryPage;
+export default SearchResults;
