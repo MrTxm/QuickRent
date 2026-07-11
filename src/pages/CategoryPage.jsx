@@ -7,178 +7,153 @@ import { CartContext } from "../context/CartContext";
 import GoBack from "../components/GoBack";
 import toast from "react-hot-toast";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const CategoryPage = () => {
+  const { categoryId } = useParams();
+  const navigate = useNavigate();
 
-    const { categoryId } = useParams();
+  const { refreshCart } = useContext(CartContext);
 
-    const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState([]);
 
-    const { refreshCart } = useContext(CartContext);
+  useEffect(() => {
+    axios
+      .get(`${API_URL}/api/products/category/${categoryId}`)
+      .then((res) => {
+        setProducts(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Failed to load products");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [categoryId]);
 
-    const [loading, setLoading] = useState(true);
-
-    const [products, setProducts] = useState([]);
-
-    useEffect(() => {
-
-        axios
-            .get(`http://localhost:5000/api/products/category/${categoryId}`)
-            .then((res) => {
-                setProducts(res.data);
-            })
-            .catch((err) => {
-                console.log(err);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-
-    }, [categoryId]);
-
-    const addToCart = async (product) => {
+  const addToCart = async (product) => {
     const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) return alert("Please login first");
+
+    if (!user) {
+      toast.error("Please login first");
+      return;
+    }
 
     try {
-        await axios.post("http://localhost:5000/api/cart", {
-            userId: user._id,
-            productId: product.product_id || product._id,
-           categoryId: Number(categoryId),   // ← Send ObjectId
-            productName: product.name,
-            productImage: product.image,
-            pricePerDay: product.pricePerDay
-        });
+      await axios.post(`${API_URL}/api/cart`, {
+        userId: user._id,
+        productId: product.product_id || product._id,
+        categoryId: Number(categoryId),
+        productName: product.name,
+        productImage: product.image,
+        pricePerDay: product.pricePerDay,
+      });
 
-        toast.success("Added to Cart");
-        window.dispatchEvent(new Event("cartUpdated"));
+      toast.success("Added to Cart");
+      window.dispatchEvent(new Event("cartUpdated"));
 
+      if (refreshCart) {
+        refreshCart();
+      }
     } catch (error) {
-        console.error(error.response?.data || error);
-        toast("Failed to add to cart");
+      console.error(error.response?.data || error);
+      toast.error(error.response?.data?.message || "Failed to add to cart");
     }
-};
+  };
 
-    if (loading) {
-
-        return (
-
-            <div className="fixed inset-0 flex justify-center items-center bg-white z-50">
-
-                <Commet
-                    color={[
-                        "#7a511d",
-                        "#a36c27",
-                        "#cc8731",
-                        "#d79f59"
-                    ]}
-                />
-
-            </div>
-
-        );
-
-    }
-
+  if (loading) {
     return (
+      <div className="fixed inset-0 flex justify-center items-center bg-white z-50">
+        <Commet
+          color={[
+            "#7a511d",
+            "#a36c27",
+            "#cc8731",
+            "#d79f59",
+          ]}
+        />
+      </div>
+    );
+  }
 
-        <div className="p-10">
-            <GoBack/>
+  return (
+    <div className="p-10">
+      <GoBack />
 
-            <h1 className="text-3xl font-bold mb-8">
+      <h1 className="text-3xl font-bold mb-8">
+        Products
+      </h1>
 
-                Products
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        {products.map((product) => (
+          <div
+            key={product._id}
+            className="bg-white rounded-xl shadow-lg p-4 hover:shadow-2xl transition"
+          >
+            <img
+              src={`${API_URL}${product.image}`}
+              alt={product.name}
+              className="w-full h-80 object-cover rounded-lg"
+            />
 
-            </h1>
+            <h2 className="mt-4 text-2xl font-bold">
+              {product.name}
+            </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-
-                {products.map((product) => (
-
-                    <div
-                        key={product._id}
-                        className="bg-white rounded-xl shadow-lg p-4 hover:shadow-2xl transition"
-                    >
-
-                        <img
-                            src={`http://localhost:5000${product.image}`}
-                            alt={product.name}
-                            className="w-full h-80 object-cover rounded-lg"
-                        />
-
-                        <h2 className="mt-4 text-2xl font-bold">
-
-                            {product.name}
-
-                        </h2>
-
-                        <div className="h-24 overflow-y-auto text-gray-600 text-sm mt-2">
-
-                            {product.description}
-
-                        </div>
-
-                        <p className="mt-3 font-semibold">
-
-                            Rs. {product.pricePerDay} / day
-
-                        </p>
-
-                        <p className={`mt-2 font-semibold ${
-                            product.available === 0 ? "text-red-500" : "text-green-600"
-                        }`}>
-                            {product.available === 0
-                                ? "Out of Stock"
-                                : `Available: ${product.available}`
-                            }
-                        </p>
-
-                        <div className="flex gap-3 mt-5">
-
-                            <button
-                                onClick={() =>
-                                    navigate(
-                                        `/product/${categoryId}/${product.product_id}`
-                                    )
-                                }
-                                className="flex-1 bg-mainbtn py-3 rounded-full hover:scale-105 transition"
-                            >
-                                See Preview
-                            </button>
-
-                            <button  
-                                disabled={product.available === 0}
-                                onClick={() => {
-                                    console.log("Button clicked");
-                                    addToCart(product);
-                                }}
-                                className={`text-sm flex content-center px-5 py-2.5 m-auto rounded-full transition-all
-                                    ${product.available === 0
-                                        ? "bg-gray-400 cursor-not-allowed"
-                                        : "bg-mainbtn hover:scale-105"
-                                    }`
-                                }
-                            >
-
-                                <img
-                                    src={assets.cart}
-                                    alt="cart"
-                                    className="w-8 h-8"
-                                />
-
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                ))}
-
+            <div className="h-24 overflow-y-auto text-gray-600 text-sm mt-2">
+              {product.description}
             </div>
 
-        </div>
+            <p className="mt-3 font-semibold">
+              Rs. {product.pricePerDay} / day
+            </p>
 
-    );
+            <p
+              className={`mt-2 font-semibold ${
+                product.available === 0
+                  ? "text-red-500"
+                  : "text-green-600"
+              }`}
+            >
+              {product.available === 0
+                ? "Out of Stock"
+                : `Available: ${product.available}`}
+            </p>
 
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() =>
+                  navigate(`/product/${categoryId}/${product.product_id}`)
+                }
+                className="flex-1 bg-mainbtn py-3 rounded-full hover:scale-105 transition"
+              >
+                See Preview
+              </button>
+
+              <button
+                disabled={product.available === 0}
+                onClick={() => addToCart(product)}
+                className={`text-sm flex content-center px-5 py-2.5 m-auto rounded-full transition-all
+                  ${
+                    product.available === 0
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-mainbtn hover:scale-105"
+                  }`}
+              >
+                <img
+                  src={assets.cart}
+                  alt="cart"
+                  className="w-8 h-8"
+                />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default CategoryPage;
