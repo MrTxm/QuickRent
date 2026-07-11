@@ -20,7 +20,18 @@ import call from './callbg.jpg'
 import cart from './ecommerce.png'
 import whist from './add-to-favorite.png'
 import cartIcon from './grocery-store.png'
-
+import cod from './cash-on-delivery.png'
+import money from './money.png'
+import payment from './payment-service.png'
+import wallet from './wallet.png'
+import booking from './booking.png'
+import settings from './settings.png'
+import location from './location.png'
+import wishlist from './wishlist.png'
+import cartW from './cartW.png'
+import revenue from './increase.png'
+import pamount from './payment.png'
+import available from './features.png'
 
 export const assets ={
     logo,
@@ -42,7 +53,19 @@ export const assets ={
     call,
     cart,
     whist,
-    cartIcon
+    cartIcon,
+    cod,
+    money,
+    payment,
+    wallet,
+    booking,
+    settings,
+    location,
+    wishlist,
+    cartW,
+    revenue,
+    pamount,
+    available
 }
 
 // camping equipment images

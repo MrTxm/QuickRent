@@ -1,66 +1,44 @@
 const express = require("express");
 const router = express.Router();
 const Product = require("../models/Product");
-const mongoose = require("mongoose");
-const Category = require("../models/Category");
 
-// 🔹 Get Products By Category
+// Get Products By Category
 router.get("/category/:categoryId", async (req, res) => {
   try {
     const categoryId = Number(req.params.categoryId);
 
-    const category = await Category.findOne({
-      category_id: categoryId
-    });
+    const products = await Product.find({
+      category_id: categoryId,
+    }).sort({ product_id: 1 });
 
-    if (!category) {
+    if (products.length === 0) {
       return res.status(404).json({
-        message: "Category not found"
+        message: "No products found",
       });
     }
-
-    const products = await Product.find({
-      category: category._id
-    })
-      .populate("category")
-      .sort({ product_id: 1 });
 
     res.status(200).json(products);
 
   } catch (error) {
     console.error(error);
     res.status(500).json({
-      message: "Server Error"
+      message: "Server Error",
     });
   }
 });
 
-// 🔹 Add Multiple Products
+// Add Multiple Products
 router.post("/bulk", async (req, res) => {
   try {
-    const productsToInsert = [];
-
-    for (const item of req.body) {
-
-      const category = await Category.findOne({
-        category_id: item.category_id
-      });
-
-      if (!category) {
-        return res.status(404).json({
-          message: `Category ${item.category_id} not found`
-        });
-      }
-
-      productsToInsert.push({
-        product_id: item.product_id,
-        name: item.name,
-        pricePerDay: item.pricePerDay,
-        category: category._id, // <-- conversion happens here
-        image: item.image,
-        available: item.available
-      });
-    }
+    const productsToInsert = req.body.map((item) => ({
+      product_id: item.product_id,
+      name: item.name,
+      description: item.description,
+      pricePerDay: item.pricePerDay,
+      category_id: item.category_id,
+      image: item.image,
+      available: item.available,
+    }));
 
     const products = await Product.insertMany(productsToInsert);
 
@@ -69,22 +47,66 @@ router.post("/bulk", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({
-      error: error.message
+      error: error.message,
     });
   }
 });
 
-// 🔹 Get All Products
-router.get("/", async (req, res) => {
+// Update Multiple Products
+router.patch("/bulk", async (req, res) => {
   try {
-    const products = await Product.find().populate("category");
-    res.json(products);
+
+    for (const item of req.body) {
+
+      await Product.updateOne(
+        {
+          product_id: item.product_id
+        },
+        {
+          $set: {
+            category_id: item.category_id,
+            name: item.name,
+            pricePerDay: item.pricePerDay,
+            image: item.image,
+            available: item.available
+          }
+        }
+      );
+
+    }
+
+    res.json({
+      message: "Products updated successfully"
+    });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({
+      message: error.message
+    });
   }
 });
 
-//🔹 Get Search  Products using search bar
+// Get All Products
+router.get("/", async (req, res) => {
+  try {
+    const products = await Product.find().sort({
+      category_id: 1,
+      product_id: 1,
+    });
+
+    res.json(products);
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+});
+
+// Search Products
 router.get("/search/:keyword", async (req, res) => {
   try {
     const { keyword } = req.params;
@@ -94,9 +116,38 @@ router.get("/search/:keyword", async (req, res) => {
         $regex: keyword,
         $options: "i",
       },
-    }).populate("category");
+    });
 
     res.json(products);
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+});
+
+// Get Single Product
+router.get("/:categoryId/:productId", async (req, res) => {
+  try {
+
+    const categoryId = Number(req.params.categoryId);
+    const productId = req.params.productId;
+
+    const product = await Product.findOne({
+      category_id: categoryId,
+      product_id: productId,
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    res.json(product);
 
   } catch (error) {
     console.error(error);

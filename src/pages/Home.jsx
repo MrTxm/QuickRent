@@ -3,6 +3,9 @@ import { assets, camping, construction, elecrical, electronics,} from '../assets
 import { useNavigate } from "react-router-dom";
 import Location from '../components/Location.jsx'
 import Footer from '../components/Footer.jsx'
+import Service from '../pages/Service.jsx'
+import About from './About.jsx';
+import Contact from './Contact.jsx';
 
 const Home = ({ theme }) => {
 
@@ -18,9 +21,10 @@ const Home = ({ theme }) => {
                 Premium construction tools, advanced electronics,<br />
                 and professional-grade equipment
                 All in one refined platform. <br /><br />
-                <button className='text-sm  flex lg:content-start bg-mainbtn  text-black  px-25 py-2.5 m-auto
-                    rounded-full cursor-pointer hover:scale-103 hover:border-hvrbtn transition-all'>
-                <a href='#Service'>Rent</a> 
+                <button 
+                className="bg-mainbtn text-black px-10 py-4 rounded-full text-lg font-medium hover:scale-105 transition-all"
+                >
+                <a href='#Service'>Browse Equipment</a> 
                 </button>
             </div>
             <div class="flex flex-nowrap gap-5 mt-5 lg:justify-start justify-center">
@@ -33,8 +37,11 @@ const Home = ({ theme }) => {
                 <img src={assets.backbaground} className='w-162.5 shadow-xl/80 backdrop-blur-xl max-sm:-rotate-10 -rotate-20 rotate-z-10 lg:hover:-rotate-9 mt-10 ' alt="" />
             </div>
         </div>
+        <Service/>
+        <About/>
+        <Contact/>
 
-        <div id='Service'>
+        {/* <div id='Service'>
                 <a href="#Service"><img src={theme === 'dark' ? assets.downw : assets.downb} className='size-15 m-auto animate-bounce mt-15' alt="" /></a>
                 <h1 className='text-7xl text-center mt-10 dark:text-white'>Our Services</h1>
             
@@ -113,6 +120,7 @@ const Home = ({ theme }) => {
             </div>
         </div>
 
+
         <div id='About' className="mt-16 px-6 lg:px-20">
             <h1 className='text-4xl text-center  lg:text-7xl lg:text-center mt-10 dark:text-white'>About</h1><br />
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-10 items-start dark:text-white">
@@ -169,7 +177,7 @@ const Home = ({ theme }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div> */}
     </div>
   )
 }
