@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Navigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import GoBack from "../components/GoBack";
 import toast from "react-hot-toast";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const PaymentPage = () => {
   const { categoryId, productId } = useParams();
@@ -31,7 +32,7 @@ const PaymentPage = () => {
   });
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/products/${categoryId}/${productId}`)
+    fetch(`${API_URL}/api/products/${categoryId}/${productId}`)
       .then((res) => res.json())
       .then((data) => setProduct(data))
       .catch((err) => console.log(err))
@@ -77,7 +78,7 @@ const PaymentPage = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/api/bookings/check-availability", {
+      const response = await axios.post(`${API_URL}/api/bookings/check-availability`, {
         productId,
         categoryId,
         startDate: bookingData.startDate,
@@ -114,7 +115,7 @@ const PaymentPage = () => {
         bookingReference,
       };
 
-    await axios.post("http://localhost:5000/api/bookings", booking);
+    await axios.post(`${API_URL}/api/bookings`, booking);
       toast(`Booking Successful!\nReference: ${bookingReference}`);
       setShowPopup(false);
       navigate("/")
@@ -129,7 +130,7 @@ const PaymentPage = () => {
       const amount = (product.pricePerDay * quantity * days * 0.5).toFixed(2);
       const bookingReference = `QR-${Date.now()}`;
 
-      const res = await axios.post("http://localhost:5000/api/payment/generate", {
+      const res = await axios.post(`${API_URL}/api/payment/generate`, {
         orderId: bookingReference,
         amount,
         firstName: bookingData.customerName,
@@ -144,7 +145,7 @@ const PaymentPage = () => {
 
       window.payhere.onCompleted = async function (orderId) {
         try {
-          await axios.post("http://localhost:5000/api/bookings", {
+          await axios.post(`${API_URL}/api/bookings`, {
             ...bookingData,
             categoryId,
             productId,
@@ -228,7 +229,7 @@ const PaymentPage = () => {
         <div className="mt-12 border rounded-3xl p-8 shadow">
           <h2 className="text-3xl font-bold mb-6">Booking Summary</h2>
           <div className="flex flex-col md:flex-row gap-8">
-            <img src={`http://localhost:5000${product.image}`} alt={product.name} className="w-80 h-80 object-cover rounded-2xl" />
+            <img src={`${API_URL}${product.image}`} alt={product.name} className="w-80 h-80 object-cover rounded-2xl" />
 
             <div className="flex-1">
               <h3 className="text-3xl font-bold">{product.name}</h3>

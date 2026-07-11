@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { ImExit } from "react-icons/im";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Navbar = ({ theme, setTheme }) => {
   const navigate = useNavigate();
   const { cartItems } = useContext(CartContext);
@@ -36,7 +38,7 @@ const Navbar = ({ theme, setTheme }) => {
   const handleLogout = async () => {
     try {
       if (user) {
-        await axios.post("http://localhost:5000/api/auth/logout", {
+        await axios.post(`${API_URL}/api/auth/logout`, {
           email: user.email,
         });
       }

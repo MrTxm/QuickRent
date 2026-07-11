@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const AccountSettings = ({ user, setUser }) => {
     const [formData, setFormData] = useState({
         fullName: user?.fullName || "",
@@ -18,7 +20,7 @@ const AccountSettings = ({ user, setUser }) => {
     const handleProfileUpdate = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.put(`http://localhost:5000/api/auth/profile/${user._id}`, formData);
+            const res = await axios.put(`${API_URL}/api/auth/profile/${user._id}`, formData);
             localStorage.setItem("user", JSON.stringify(res.data));
             setUser(res.data);
             alert("Profile updated successfully!");
@@ -34,7 +36,7 @@ const AccountSettings = ({ user, setUser }) => {
         }
 
         try {
-            await axios.put(`http://localhost:5000/api/auth/change-password/${user._id}`, passwordData);
+            await axios.put(`${API_URL}/api/auth/change-password/${user._id}`, passwordData);
             alert("Password changed successfully!");
             setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
         } catch (err) {

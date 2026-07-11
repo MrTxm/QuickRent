@@ -6,6 +6,8 @@ import { FaHeart } from "react-icons/fa";
 import { useContext } from "react";
 import { CartContext } from "../context/CartContext";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const SearchResults = () => {
     const { addToCart} = useContext(CartContext);
   const { keyword } = useParams();
@@ -15,7 +17,7 @@ const SearchResults = () => {
   useEffect(() => {
     axios
       .get(
-        `http://localhost:5000/api/products/search/${keyword}`
+        `${API_URL}/api/products/search/${keyword}`
       )
       .then((res) => {
         setProducts(res.data);
@@ -40,7 +42,7 @@ const SearchResults = () => {
                                 <FaHeart className="text-black-400 hover:text-red-500 text-3xl" />
                             </button>
               <img
-              src={`http://localhost:5000${product.image}`}
+              src={`${API_URL}${product.image}`}
               alt={''}
               className="w-full h-90 object-cover rounded-lg"
             />

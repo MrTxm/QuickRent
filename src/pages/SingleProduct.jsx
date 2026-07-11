@@ -12,6 +12,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import GoBack from "../components/GoBack";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const SingleProduct = ({ setShowAuth }) => {
   const { categoryId, productId } = useParams();
   const navigate = useNavigate();
@@ -34,7 +36,7 @@ const SingleProduct = ({ setShowAuth }) => {
       setLoading(true);
 
       const res = await fetch(
-        `http://localhost:5000/api/products/${categoryId}/${productId}`
+        `${API_URL}/api/products/${categoryId}/${productId}`
       );
 
       const data = await res.json();
@@ -55,7 +57,7 @@ const SingleProduct = ({ setShowAuth }) => {
   const fetchReviews = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/reviews/product/${productId}?categoryId=${categoryId}`
+        `${API_URL}/api/reviews/product/${productId}?categoryId=${categoryId}`
       );
 
       setReviews(res.data.reviews || []);
@@ -113,7 +115,7 @@ const SingleProduct = ({ setShowAuth }) => {
     if (!user) return;
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/check-user", {
+      const res = await axios.post(`${API_URL}/api/auth/check-user`, {
         email: user.email,
       });
 
@@ -156,7 +158,7 @@ const SingleProduct = ({ setShowAuth }) => {
 
       console.log("CART SEND DATA:", cartData);
 
-      const res = await axios.post("http://localhost:5000/api/cart", cartData);
+      const res = await axios.post(`${API_URL}/api/cart`, cartData);
 
       toast.success(res.data.message || "Product added to cart");
       window.dispatchEvent(new Event("cartUpdated"));
@@ -193,7 +195,7 @@ const SingleProduct = ({ setShowAuth }) => {
       console.log("WISHLIST SEND DATA:", wishlistData);
 
       const res = await axios.post(
-        "http://localhost:5000/api/wishlist",
+        `${API_URL}/api/wishlist`,
         wishlistData
       );
 
@@ -257,7 +259,7 @@ Please provide more details.
         {/* Image Card */}
         <div className="lg:col-span-4 bg-white rounded-2xl shadow-lg overflow-hidden">
           <img
-            src={`http://localhost:5000${product.image}`}
+            src={`${API_URL}${product.image}`}
             alt={product.name}
             className="w-full h-[420px] object-cover"
           />

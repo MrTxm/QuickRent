@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Cart = ({ isOpen }) => {
   const [cart, setCart] = useState([]);
   const [stockWarning, setStockWarning] = useState({});
@@ -41,7 +43,7 @@ const Cart = ({ isOpen }) => {
   const loadCart = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/cart/${user._id}`
+        `${API_URL}/api/cart/${user._id}`
       );
 
       console.log("CART DATA:", res.data);
@@ -70,7 +72,7 @@ const Cart = ({ isOpen }) => {
 
     try {
       await axios.put(
-        `http://localhost:5000/api/cart/increase/${item._id}`
+        `${API_URL}/api/cart/increase/${item._id}`
       );
 
       setStockWarning((prev) => ({
@@ -96,7 +98,7 @@ const Cart = ({ isOpen }) => {
   const decrease = async (id) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/cart/decrease/${id}`
+        `${API_URL}/api/cart/decrease/${id}`
       );
 
       setStockWarning((prev) => ({
@@ -115,7 +117,7 @@ const Cart = ({ isOpen }) => {
   const remove = async (id) => {
     try {
       await axios.delete(
-        `http://localhost:5000/api/cart/${id}`
+        `${API_URL}/api/cart/${id}`
       );
 
       await loadCart();
@@ -157,7 +159,7 @@ const Cart = ({ isOpen }) => {
               className="flex gap-3 bg-white border rounded-xl p-3 mb-4"
             >
               <img
-                src={`http://localhost:5000${item.productImage}`}
+                src={`${API_URL}${item.productImage}`}
                 alt={item.productName}
                 className="w-32 h-32 rounded-xl object-cover"
               />

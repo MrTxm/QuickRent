@@ -3,6 +3,8 @@ import { FaStar, FaRegStar } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const ReviewModal = ({ booking, user, onClose, onSubmitted }) => {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -19,7 +21,7 @@ const ReviewModal = ({ booking, user, onClose, onSubmitted }) => {
     try {
       setSubmitting(true);
 
-      const res = await axios.post("http://localhost:5000/api/reviews", {
+      const res = await axios.post(`${API_URL}/api/reviews`, {
         userId: user._id,
         userName: user.fullName || user.name || "QuickRent User",
         userEmail: user.email,

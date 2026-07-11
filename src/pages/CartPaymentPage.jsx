@@ -4,6 +4,8 @@ import axios from "axios";
 import GoBack from "../components/GoBack";
 import toast from "react-hot-toast";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const CartPaymentPage = () => {
     const user = JSON.parse(localStorage.getItem("user")) || null;
     const navigate = useNavigate();
@@ -28,7 +30,7 @@ const CartPaymentPage = () => {
     const fetchCart = async () => {
         try {
             if (!user?._id) return;
-            const res = await axios.get(`http://localhost:5000/api/cart/${user._id}`);
+            const res = await axios.get(`${API_URL}/api/cart/${user._id}`);
             setCartItems(res.data);
         } catch (err) {
             console.error("Cart Fetch Error:", err.response?.data || err);
@@ -88,7 +90,7 @@ const CartPaymentPage = () => {
 
     // Check Availability
     const checkAvailability = async () => {
-        const res = await axios.post("http://localhost:5000/api/checkout/check", {
+        const res = await axios.post(`${API_URL}/api/checkout/check`, {
             userId: user._id,
             startDate: bookingData.startDate,
             endDate: bookingData.endDate
@@ -98,7 +100,7 @@ const CartPaymentPage = () => {
 
     // Confirm Booking
     const confirmCheckout = async (paymentMethod, paymentStatus, transactionId = "") => {
-        const res = await axios.post("http://localhost:5000/api/checkout/confirm", {
+        const res = await axios.post(`${API_URL}/api/checkout/confirm`, {
             userId: user._id,
             bookingData,
             paymentMethod,
@@ -155,7 +157,7 @@ const CartPaymentPage = () => {
 
             const amount = (grandTotal * 0.5).toFixed(2);
 
-            const paymentRes = await axios.post("http://localhost:5000/api/payment/generate", {
+            const paymentRes = await axios.post(`${API_URL}/api/payment/generate`, {
                 orderId: "QR-" + Date.now(),
                 amount,
                 firstName: bookingData.customerName,
@@ -290,7 +292,7 @@ const CartPaymentPage = () => {
                 {cartItems.map((item) => (
                     <div key={item._id} className="flex flex-col md:flex-row gap-6 border rounded-2xl p-6 shadow">
                         <img
-                            src={`http://localhost:5000${item.productImage}`}
+                            src={`${API_URL}${item.productImage}`}
                             alt={item.productName}
                             className="w-50 md:w-32 h-40  rounded-xl"
                         />

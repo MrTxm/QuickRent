@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import { FaPrint, FaTrash, FaStar } from "react-icons/fa";
 import ReviewModal from "./ReviewModal";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +23,7 @@ const MyBookings = () => {
 
   const imageUrl = (image) => {
     if (!image) return "";
-    return image.startsWith("http") ? image : `http://localhost:5000${image}`;
+    return image.startsWith("http") ? image : `${API_URL}${image}`;
   };
 
   const cleanStatus = (value) => String(value || "").trim().toLowerCase();
@@ -41,7 +43,7 @@ const MyBookings = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `http://localhost:5000/api/bookings/user/${user.email}`
+        `${API_URL}/api/bookings/user/${user.email}`
       );
       setBookings(res.data);
     } catch (err) {
@@ -56,7 +58,7 @@ const MyBookings = () => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
 
     try {
-      await axios.put(`http://localhost:5000/api/bookings/cancel/${bookingId}`);
+      await axios.put(`${API_URL}/api/bookings/cancel/${bookingId}`);
       toast.success("Booking cancelled successfully");
       fetchBookings();
     } catch (err) {

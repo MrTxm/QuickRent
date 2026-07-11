@@ -3,6 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Wishlist=()=>{
 
 const[wishlist,setWishlist]=useState([]);
@@ -14,14 +16,14 @@ useEffect(()=>{loadWishlist();},[]);
     const loadWishlist=async()=>{
         const res=await axios.get(
 
-        `http://localhost:5000/api/wishlist/${user._id}`
+        `${API_URL}/api/wishlist/${user._id}`
         );
         setWishlist(res.data);
         };
 
         const removeItem=async(id)=>{
         await axios.delete(
-        `http://localhost:5000/api/wishlist/${id}`
+        `${API_URL}/api/wishlist/${id}`
         );
         loadWishlist();
     };
@@ -43,7 +45,7 @@ useEffect(()=>{loadWishlist();},[]);
                         key={item._id}
                         className="shadow-lg rounded-xl p-4">
                         <img
-                        src={`http://localhost:5000${item.productImage}`}
+                        src={`${API_URL}${item.productImage}`}
                         className="w-full h-52 object-cover rounded-xl"
                         />
                         <h2 className="text-xl font-bold mt-3">

@@ -3,6 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import GoBack from "../components/GoBack";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const CartCheckout = () => {
 
     const navigate = useNavigate();
@@ -26,7 +28,7 @@ const CartCheckout = () => {
     const fetchCart = async () => {
         try {
             const res = await axios.get(
-                `http://localhost:5000/api/cart/${user._id}`
+                `${API_URL}/api/cart/${user._id}`
             );
             setCartItems(res.data);
         } catch (error) {
@@ -39,7 +41,7 @@ const CartCheckout = () => {
     const increaseQty = async (id) => {
         try {
             await axios.put(
-                `http://localhost:5000/api/cart/increase/${id}`
+                `${API_URL}/api/cart/increase/${id}`
             );
             fetchCart();
             window.dispatchEvent(new Event("cartUpdated"));
@@ -51,7 +53,7 @@ const CartCheckout = () => {
     const decreaseQty = async (id) => {
         try {
             await axios.put(
-                `http://localhost:5000/api/cart/decrease/${id}`
+                `${API_URL}/api/cart/decrease/${id}`
             );
             fetchCart();
             window.dispatchEvent(new Event("cartUpdated"));
@@ -63,7 +65,7 @@ const CartCheckout = () => {
     const removeItem = async (id) => {
         try {
             await axios.delete(
-                `http://localhost:5000/api/cart/${id}`
+                `${API_URL}/api/cart/${id}`
             );
             fetchCart();
             window.dispatchEvent(new Event("cartUpdated"));
@@ -108,7 +110,7 @@ const CartCheckout = () => {
                         className="flex gap-5 border rounded-xl p-5 mb-5"
                     >
                         <img
-                            src={`http://localhost:5000${item.productImage}`}
+                            src={`${API_URL}${item.productImage}`}
                             className="w-50 h-40 rounded-xl object-cover"
                             alt=""
                         />

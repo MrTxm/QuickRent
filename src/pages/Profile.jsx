@@ -8,6 +8,8 @@ import AddressSection from "../components/AddressSection";
 import AccountSettings from "../components/AccountSettings"
 import GoBack from "../components/GoBack";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Profile = () => {
     const [user, setUser] = useState(null);
     const [selectedMenu, setSelectedMenu] = useState("dashboard");
@@ -27,9 +29,9 @@ const Profile = () => {
     const loadStats = async (loggedUser) => {
         try {
             const [bookingsRes, wishlistRes, cartRes] = await Promise.all([
-                axios.get(`http://localhost:5000/api/bookings/user/${loggedUser.email}`),
-                axios.get(`http://localhost:5000/api/wishlist/${loggedUser._id}`),
-                axios.get(`http://localhost:5000/api/cart/${loggedUser._id}`)
+                axios.get(`${API_URL}/api/bookings/user/${loggedUser.email}`),
+                axios.get(`${API_URL}/api/wishlist/${loggedUser._id}`),
+                axios.get(`${API_URL}/api/cart/${loggedUser._id}`)
             ]);
 
             setStats({
@@ -51,7 +53,7 @@ const Profile = () => {
             formData.append("profile", file);
 
             const res = await axios.post(
-                `http://localhost:5000/api/auth/upload-profile/${user._id}`,
+                `${API_URL}/api/auth/upload-profile/${user._id}`,
                 formData
             );
 
@@ -67,7 +69,7 @@ const Profile = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.post("http://localhost:5000/api/auth/logout", { email: user.email });
+            await axios.post(`${API_URL}/api/auth/logout`, { email: user.email });
             localStorage.removeItem("user");
             window.location.href = "/";
         } catch (err) {
@@ -102,7 +104,7 @@ const Profile = () => {
                                 <img
                                     src={
                                         user?.profileImage
-                                            ? `http://localhost:5000/profile/${user.profileImage}`
+                                            ? `${API_URL}/profile/${user.profileImage}`
                                             : "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                                     }
                                     alt="Profile"

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaEdit } from "react-icons/fa";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const AddressSection = ({ user }) => {
     const [addresses, setAddresses] = useState([]);
     const [editingAddress, setEditingAddress] = useState(null);
@@ -18,7 +20,7 @@ const AddressSection = ({ user }) => {
 
     const fetchAddresses = async () => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/address/${user._id}`);
+            const res = await axios.get(`${API_URL}/api/address/${user._id}`);
             setAddresses(res.data);
         } catch (err) {
             console.error("Address fetch error:", err.response?.data || err);
@@ -35,9 +37,9 @@ const AddressSection = ({ user }) => {
     const saveAddress = async () => {
         try {
             if (editingAddress?._id) {
-                await axios.put(`http://localhost:5000/api/address/${editingAddress._id}`, formData);
+                await axios.put(`${API_URL}/api/address/${editingAddress._id}`, formData);
             } else {
-                await axios.post("http://localhost:5000/api/address", { ...formData, userId: user._id });
+                await axios.post(`${API_URL}/api/address`, { ...formData, userId: user._id });
             }
             fetchAddresses();
             setEditingAddress(null);
