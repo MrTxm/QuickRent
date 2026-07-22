@@ -14,27 +14,28 @@ const Home = ({ theme }) => {
   return (
     <div className='mt-20' >
         <div id='Home' className='grid grid-flow-col-1 lg:grid-flow-col  max-sm:w-auto max-sm:items-center max-sm:row-span-1 mx-10'>
-                <div class="text-shadow-lg/30 text-7xl lg:text-8xl py-6 dark:text-white">
+                <div class="text-shadow-lg/30 text-7xl lg:text-8xl py-6 dark:text-white mt-15">
                 Rent Without <br /> Limits.
             </div>
             <div className='text-mediam dark:text-white'>
                 Premium construction tools, advanced electronics,<br />
                 and professional-grade equipment
                 All in one refined platform. <br /><br />
-                <button 
+                <button
+                onClick={() => navigate("/service")}
                 className="bg-mainbtn text-black px-10 py-4 rounded-full text-lg font-medium hover:scale-105 transition-all"
                 >
-                <a href='#Service'>Browse Equipment</a> 
+                <a href=''>Browse Equipment</a> 
                 </button>
             </div>
-            <div class="flex flex-nowrap gap-5 mt-5 lg:justify-start justify-center">
+            {/* <div class="flex flex-nowrap gap-5 mt-5 lg:justify-start justify-center">
                 <a href="#"><img src={assets.instagram} className='hover:scale-115 w-10 l-10' alt="" /></a>
                 <a href="#"><img src={assets.fb} className='hover:scale-110 w-10 l-10' alt="" /></a>
                 <a href="#"><img src={assets.whatsapp} className='hover:scale-115 w-10 l-10' alt="" /></a>
-            </div>
+            </div> */}
 
             <div class=" row-span-4">
-                <img src={assets.backbaground} className='w-162.5 shadow-xl/80 backdrop-blur-xl max-sm:-rotate-10 -rotate-20 rotate-z-10 lg:hover:-rotate-9 mt-10 ' alt="" />
+                <img src={assets.backbaground} className='w-180 shadow-xl/80  mt-10 ' alt="" />
             </div>
         </div>
         <Service/>

@@ -51,12 +51,12 @@ const About = () => {
                         </div>
                     </div>
 
-                    <button 
+                    {/* <button 
                         onClick={() => navigate('/Services')}
                         className="bg-mainbtn text-black px-10 py-4 rounded-full text-lg font-medium hover:scale-105 transition-all"
                     >
                         Explore Our Collection
-                    </button>
+                    </button> */}
                 </div>
 
                 {/* Right Side - Location/Map */}

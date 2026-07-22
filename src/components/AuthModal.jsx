@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { assets } from "../assets/assets.js";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -31,7 +32,7 @@ const AuthModal = ({ onClose }) => {
     e.preventDefault();
 
     if (signupData.password !== signupData.confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
@@ -44,7 +45,7 @@ const AuthModal = ({ onClose }) => {
         password: signupData.password.trim(),
       });
 
-      alert("Account Created Successfully");
+      toast.success("Account Created Successfully");
 
       setSignupData({
         fullName: "",
@@ -58,43 +59,62 @@ const AuthModal = ({ onClose }) => {
       setIsSignup(false);
     } catch (error) {
       console.log("SIGNUP ERROR:", error.response?.data || error.message);
-      alert(error.response?.data?.message || "Signup Failed");
+      toast.error(error.response?.data?.message || "Signup Failed");
     }
   };
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const res = await axios.post(`${API_URL}/api/auth/login`, {
-        email: loginData.email.trim().toLowerCase(),
-        password: loginData.password.trim(),
-      });
-
+  const loginPromise = axios
+    .post(`${API_URL}/api/auth/login`, {
+      email: loginData.email.trim().toLowerCase(),
+      password: loginData.password.trim(),
+    })
+    .then((res) => {
       const loggedUser = res.data.user;
       const userRole = res.data.role || loggedUser?.role;
 
       if (!loggedUser) {
-        alert("Login success, but user data was not received from backend");
-        return;
+        throw new Error("Login success, but user data was not received");
       }
 
-      localStorage.setItem("user", JSON.stringify(loggedUser));
+      return {
+        loggedUser,
+        userRole,
+      };
+    });
 
-      if (userRole === "admin") {
-        localStorage.setItem("quickrent_admin", JSON.stringify(loggedUser));
-        closeModal();
-        navigate("/dashboard");
-      } else {
-        localStorage.removeItem("quickrent_admin");
-        closeModal();
-        navigate("/");
-      }
-    } catch (error) {
-      console.log("LOGIN ERROR:", error.response?.data || error.message);
-      alert(error.response?.data?.message || error.message || "Login Failed");
+  try {
+    const { loggedUser, userRole } = await toast.promise(loginPromise, {
+      loading: "Logging in...",
+      success: ({ loggedUser }) => (
+        <b>Welcome, {loggedUser.fullName || loggedUser.email}!</b>
+      ),
+      error: (error) => (
+        <b>
+          {error.response?.data?.message ||
+            error.message ||
+            "Login failed"}
+        </b>
+      ),
+    });
+
+    localStorage.setItem("user", JSON.stringify(loggedUser));
+
+    if (userRole === "admin") {
+      localStorage.setItem("quickrent_admin", JSON.stringify(loggedUser));
+      closeModal();
+      navigate("/dashboard");
+    } else {
+      localStorage.removeItem("quickrent_admin");
+      closeModal();
+      navigate("/");
     }
-  };
+  } catch (error) {
+    console.log("LOGIN ERROR:", error.response?.data || error.message);
+  }
+};
 
   return (
     <div

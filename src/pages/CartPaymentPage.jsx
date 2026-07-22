@@ -2,9 +2,26 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import GoBack from "../components/GoBack";
+import SavedAddressPicker from "../components/SavedAddressPicker";
 import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const calculateRentalDays = (startDate, endDate) => {
+    if (!startDate || !endDate) return 0;
+
+    const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
+    const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
+
+    if (!startYear || !startMonth || !startDay || !endYear || !endMonth || !endDay) {
+        return 0;
+    }
+
+    const startTime = Date.UTC(startYear, startMonth - 1, startDay);
+    const endTime = Date.UTC(endYear, endMonth - 1, endDay);
+
+    return Math.floor((endTime - startTime) / (1000 * 60 * 60 * 24)) + 1;
+};
 
 const CartPaymentPage = () => {
     const user = JSON.parse(localStorage.getItem("user")) || null;
@@ -51,13 +68,19 @@ const CartPaymentPage = () => {
         });
     };
 
+    const handleSelectAddress = (address) => {
+        setBookingData((prev) => ({
+            ...prev,
+            customerName: address.customerName || prev.customerName,
+            contactNumber: address.contactNumber || prev.contactNumber,
+            province: address.province || prev.province,
+            city: address.city || prev.city,
+            address: address.address || prev.address,
+        }));
+    };
+
     // Calculate Rental Days
-    const rentalDays = bookingData.startDate && bookingData.endDate
-        ? Math.ceil(
-            (new Date(bookingData.endDate) - new Date(bookingData.startDate)) /
-            (1000 * 60 * 60 * 24)
-        ) + 1
-        : 0;
+    const rentalDays = calculateRentalDays(bookingData.startDate, bookingData.endDate);
 
     // Grand Total
     const grandTotal = cartItems.reduce(
@@ -81,8 +104,8 @@ const CartPaymentPage = () => {
             toast.error("Please fill all required fields!");
             return false;
         }
-        if (new Date(bookingData.endDate) < new Date(bookingData.startDate)) {
-            alert("End date must be after Start date!");
+        if (rentalDays <= 0) {
+            toast.error("End date must be on or after Start date!");
             return false;
         }
         return true;
@@ -127,7 +150,7 @@ const CartPaymentPage = () => {
             }
 
             const result = await confirmCheckout("On Site", "Pending");
-            navigate("/order-success", { state: result });
+            navigate(`/order-success`, { state: result });
         } catch (err) {
             console.log(err.response?.config?.url);
             console.log(err.response?.status);
@@ -173,25 +196,25 @@ const CartPaymentPage = () => {
             window.payhere.onCompleted = async (orderId) => {
                 try {
                     const result = await confirmCheckout("Advance", "Paid", orderId);
-                    navigate("/order-success", { state: result });
+                    navigate(`/order-success`, { state: result });
                 } catch (err) {
-                    alert("Failed to save booking after payment");
+                    toast.error("Failed to save booking after payment");
                 }
             };
 
             window.payhere.onDismissed = () => {
-                alert("Payment Cancelled");
+                toast.error("Payment Cancelled");
             };
 
             window.payhere.onError = (err) => {
                 console.error(err);
-                alert("Payment Error");
+                toast.error("Payment Error");
             };
 
             window.payhere.startPayment(paymentData);
         } catch (err) {
             console.error("Advance Payment Error:", err.response?.data || err);
-            alert("Payment initiation failed");
+            toast.error("Payment initiation failed");
         } finally {
             setProcessing(false);
         }
@@ -222,6 +245,8 @@ const CartPaymentPage = () => {
             <div className="bg-white shadow-xl rounded-2xl p-8">
                 <h2 className="text-3xl font-bold mb-6">Booking Details</h2>
 
+                <SavedAddressPicker user={user} onSelect={handleSelectAddress} />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <input name="customerName" value={bookingData.customerName} onChange={handleChange} placeholder="Full Name" className="border p-4 rounded-xl" required />
                     <input name="gmail" value={bookingData.gmail} onChange={handleChange} placeholder="Email" className="border p-4 rounded-xl" required />
@@ -239,16 +264,22 @@ const CartPaymentPage = () => {
                         <option value="">Select Province</option>
                         <option>Western Province</option>
                         <option>Central Province</option>
-                        <option>Southern Province</option>
-                        <option>Northern Province</option>
-                        <option>Eastern Province</option>
+                        <option>Sabragamuwa Province</option>
+                        <option>Uva Province</option>
                     </select>
 
                     <input name="city" value={bookingData.city} onChange={handleChange} placeholder="City" className="border p-4 rounded-xl" required />
-
-                    <input type="date" name="startDate" min={new Date().toISOString().split("T")[0]} value={bookingData.startDate} onChange={handleChange} className="border p-4 rounded-xl" required />
-                    <input type="date" name="endDate" min={bookingData.startDate} value={bookingData.endDate} onChange={handleChange} className="border p-4 rounded-xl" required />
-                </div>
+                        <div className="grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Start Date</label>
+                                <input type="date" name="startDate" min={new Date().toISOString().split("T")[0]} value={bookingData.startDate} onChange={handleChange} className="w-full border rounded-2xl p-4" required />
+                            </div>
+                        </div>
+                        <div>
+                                <label className="block text-sm font-medium mb-2">End Date</label>
+                                <input type="date" name="endDate" min={bookingData.startDate || new Date().toISOString().split("T")[0]} value={bookingData.endDate} onChange={handleChange} className="w-full border rounded-2xl p-4" required />
+                            </div>
+                    </div>
 
                 <textarea
                     name="address"

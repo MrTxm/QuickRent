@@ -165,6 +165,46 @@ const bookingSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    overdueCharge: {
+      type: Number,
+      default: 0,
+    },
+
+    overdueReason: {
+      type: String,
+      default: "",
+    },
+
+    overdueChargeAddedAt: {
+      type: Date,
+      default: null,
+    },
+
+    autoStatusReason: {
+      type: String,
+      default: "",
+    },
+
+    expiredAt: {
+      type: Date,
+      default: null,
+    },
+
+    overdueAt: {
+      type: Date,
+      default: null,
+    },
+
+    autoStockReleased: {
+      type: Boolean,
+      default: false,
+    },
+
+    stockReleasedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

@@ -121,23 +121,9 @@ const CartCheckout = () => {
                             <p>
                                 Rs. {item.pricePerDay} / day
                             </p><br />
-                            {/* <div className="flex items-center gap-3 mt-3">
-                                <button
-                                    onClick={() => decreaseQty(item._id)}
-                                    className="bg-gray-200 px-4 py-1 rounded"
-                                >
-                                    -
-                                </button>*/
-                                <span>
-                                   Selected Quantity<span className="text-green-600 text-xl pl-5">{item.quantity}</span>
-                                </span>
-                                /*<button
-                                    onClick={() => increaseQty(item._id)}
-                                    className="bg-gray-200 px-4 py-1 rounded"
-                                >
-                                    +
-                                </button>
-                            </div> */}
+                            <span>
+                                Selected Quantity<span className="text-green-600 text-xl pl-5">{item.quantity}</span>
+                            </span>
                             <p className="font-bold mt-3">
                                 Rs.
                                 {

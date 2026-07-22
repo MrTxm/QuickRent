@@ -6,7 +6,7 @@ const Service = ({theme}) => {
     const navigate = useNavigate();
   return (
     <div>
-                    <a href="#Service"><img src={theme === 'dark' ? assets.downw : assets.downb} className='size-15 m-auto animate-bounce mt-15' alt="" /></a>
+                    <a href="/Service"><img src={theme === 'dark' ? assets.downw : assets.downb} className='size-15 m-auto animate-bounce mt-15' alt="" /></a>
                     <h1 className='text-7xl text-center mt-10 dark:text-white'>Our Services</h1>
 
                 <div className='bg-mainbg shadow-xl/30 mx-4 lg:mx-16 my-10 rounded-xl overflow-hidden dark:bg-yellow-700'>

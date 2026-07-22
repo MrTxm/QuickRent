@@ -28,6 +28,32 @@ const MyBookings = () => {
 
   const cleanStatus = (value) => String(value || "").trim().toLowerCase();
 
+  const safeText = (value) => {
+    if (value === null || value === undefined) return "";
+
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  };
+
+  const money = (value) => {
+    const amount = Number(value || 0);
+    return `Rs. ${amount.toLocaleString("en-LK")}`;
+  };
+
+  const shortDate = (value) => {
+    if (!value) return "-";
+
+    return new Date(value).toLocaleDateString("en-LK", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   const canReview = (booking) => {
     const bookingStatus = cleanStatus(booking.bookingStatus);
     const paymentStatus = cleanStatus(booking.paymentStatus);
@@ -42,9 +68,9 @@ const MyBookings = () => {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(
-        `${API_URL}/api/bookings/user/${user.email}`
-      );
+
+      const res = await axios.get(`${API_URL}/api/bookings/user/${user.email}`);
+
       setBookings(res.data);
     } catch (err) {
       console.error("FETCH BOOKINGS ERROR:", err.response?.data || err);
@@ -67,80 +93,250 @@ const MyBookings = () => {
     }
   };
 
-  const printBooking = (booking) => {
+  const openPrintWindow = (title, bodyHtml) => {
     const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+      alert("Please allow popups to print the receipt.");
+      return;
+    }
 
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
-      <head>
-        <title>QuickRent Booking Receipt</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
-          .receipt { max-width: 850px; margin: auto; }
-          .header { text-align: center; border-bottom: 3px solid #1e3a8a; padding-bottom: 20px; }
-          h1 { color: #1e3a8a; }
-          .info { display: flex; justify-content: space-between; gap: 30px; margin: 30px 0; }
-          .product-img { width: 180px; height: 180px; object-fit: cover; border-radius: 12px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 25px; }
-          th, td { padding: 14px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-          th { background: #f1f5f9; color: #1e40af; }
-          .total { font-size: 24px; font-weight: bold; color: #1e3a8a; text-align: right; margin-top: 25px; }
-          .footer { text-align: center; margin-top: 35px; color: #64748b; }
-        </style>
-      </head>
-      <body>
-        <div class="receipt">
-          <div class="header">
-            <h1>QuickRent</h1>
-            <h2>Booking Receipt</h2>
-            <p>Reference: <strong>${booking.bookingReference}</strong></p>
-            <p>Date: ${new Date(booking.createdAt).toLocaleDateString()}</p>
-          </div>
+        <head>
+          <title>${safeText(title)}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              color: #111827;
+              margin: 32px;
+            }
 
-          <div class="info">
-            <div>
-              <h3>Customer Details</h3>
-              <p>${booking.customerName}</p>
-              <p>${booking.gmail}</p>
-              <p>${booking.contactNumber}</p>
+            h1, h2, h3 {
+              margin: 0 0 10px;
+            }
 
-              <h3>Booking Period</h3>
-              <p>${new Date(booking.startDate).toLocaleDateString()} - ${new Date(booking.endDate).toLocaleDateString()}</p>
-              <p>Days: ${booking.days}</p>
-            </div>
+            .muted {
+              color: #6b7280;
+              font-size: 12px;
+            }
 
-            <img src="${imageUrl(booking.productImage)}" class="product-img" />
-          </div>
+            .grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 8px 24px;
+              margin: 18px 0;
+            }
 
-          <table>
-            <tr>
-              <th>Product</th>
-              <th>Quantity</th>
-              <th>Rate / Day</th>
-              <th>Amount</th>
-            </tr>
-            <tr>
-              <td>${booking.productName}</td>
-              <td>${booking.quantity}</td>
-              <td>Rs. ${booking.pricePerDay || Math.round(booking.totalAmount / booking.days)}</td>
-              <td>Rs. ${booking.totalAmount}</td>
-            </tr>
-          </table>
+            .line {
+              display: flex;
+              justify-content: space-between;
+              gap: 20px;
+              border-bottom: 1px solid #e5e7eb;
+              padding: 8px 0;
+            }
 
-          <div class="total">Total Amount: Rs. ${booking.totalAmount}</div>
-          <p><strong>Payment Method:</strong> ${booking.paymentMethod}</p>
-          <p><strong>Payment Status:</strong> ${booking.paymentStatus}</p>
-          <p><strong>Booking Status:</strong> ${booking.bookingStatus}</p>
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 18px;
+            }
 
-          <div class="footer">Thank you for choosing QuickRent.</div>
-        </div>
-      </body>
+            th, td {
+              border-bottom: 1px solid #e5e7eb;
+              padding: 10px;
+              text-align: left;
+              font-size: 13px;
+            }
+
+            th {
+              background: #f3f4f6;
+            }
+
+            .total {
+              margin-top: 18px;
+              max-width: 360px;
+              margin-left: auto;
+            }
+
+            .brand {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              border-bottom: 2px solid #0f3466;
+              padding-bottom: 14px;
+              margin-bottom: 18px;
+            }
+
+            .print-note {
+              margin-top: 28px;
+              font-size: 12px;
+              color: #6b7280;
+              text-align: center;
+            }
+
+            .note-box {
+              margin-top: 22px;
+              padding: 14px;
+              border: 1px solid #e5e7eb;
+              border-radius: 10px;
+              background: #f9fafb;
+            }
+
+            @media print {
+              button {
+                display: none;
+              }
+
+              body {
+                margin: 20px;
+              }
+            }
+          </style>
+        </head>
+
+        <body>
+          <button
+            onclick="window.print()"
+            style="padding:10px 16px;margin-bottom:16px;background:#0f3466;color:white;border:0;border-radius:8px;cursor:pointer;"
+          >
+            Print
+          </button>
+
+          ${bodyHtml}
+        </body>
       </html>
     `);
 
     printWindow.document.close();
-    printWindow.print();
+    printWindow.focus();
+  };
+
+  const printBooking = (booking) => {
+    const quantity = Number(booking.quantity || 1);
+    const days = Number(booking.days || 1);
+    const totalAmount = Number(booking.totalAmount || 0);
+
+    const ratePerDay =
+      Number(booking.pricePerDay || 0) ||
+      Math.round(totalAmount / Math.max(quantity * days, 1));
+
+    const advancePaid = Number(booking.advancePaid || 0);
+
+    const balanceAmount =
+      booking.balanceAmount !== undefined
+        ? Number(booking.balanceAmount || 0)
+        : Math.max(totalAmount - advancePaid, 0);
+
+    const rows = `
+      <tr>
+        <td>${safeText(booking.productName)}</td>
+        <td>${safeText(booking.productId || booking.product_id || "-")}</td>
+        <td>${safeText(quantity)}</td>
+        <td>${safeText(days)}</td>
+        <td>${money(ratePerDay)}</td>
+        <td>${money(totalAmount)}</td>
+      </tr>
+    `;
+
+    openPrintWindow(
+      `QuickRent Receipt ${booking.bookingReference || booking._id}`,
+      `
+        <div class="brand">
+          <div>
+            <h1>QuickRent</h1>
+            <p class="muted">Rental booking receipt</p>
+          </div>
+
+          <div style="text-align:right">
+            <h3>${safeText(booking.bookingReference || booking._id)}</h3>
+            <p class="muted">Printed: ${new Date().toLocaleString("en-LK")}</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div><strong>Customer:</strong> ${safeText(booking.customerName)}</div>
+          <div><strong>Email:</strong> ${safeText(booking.gmail)}</div>
+
+          <div><strong>Contact:</strong> ${safeText(booking.contactNumber)}</div>
+          <div><strong>NIC:</strong> ${safeText(booking.nic || "-")}</div>
+
+          <div><strong>Start:</strong> ${shortDate(booking.startDate)}</div>
+          <div><strong>End:</strong> ${shortDate(booking.endDate)}</div>
+
+          <div><strong>Booking Date:</strong> ${shortDate(booking.createdAt)}</div>
+          <div><strong>Rental Days:</strong> ${safeText(days)}</div>
+
+          <div style="grid-column:1 / -1">
+            <strong>Address:</strong>
+            ${safeText(booking.address || "")}
+            ${booking.city ? `, ${safeText(booking.city)}` : ""}
+            ${booking.province ? `, ${safeText(booking.province)}` : ""}
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>ID</th>
+              <th>Qty</th>
+              <th>Days</th>
+              <th>Rate / Day</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+
+        <div class="total">
+          <div class="line">
+            <span>Total</span>
+            <strong>${money(totalAmount)}</strong>
+          </div>
+
+          <div class="line">
+            <span>Advance Paid</span>
+            <strong>${money(advancePaid)}</strong>
+          </div>
+
+          <div class="line">
+            <span>Balance</span>
+            <strong>${money(balanceAmount)}</strong>
+          </div>
+
+          <div class="line">
+            <span>Payment Method</span>
+            <strong>${safeText(booking.paymentMethod || "-")}</strong>
+          </div>
+
+          <div class="line">
+            <span>Payment Status</span>
+            <strong>${safeText(booking.paymentStatus || "Pending")}</strong>
+          </div>
+
+          <div class="line">
+            <span>Booking Status</span>
+            <strong>${safeText(booking.bookingStatus || "-")}</strong>
+          </div>
+        </div>
+
+        <div class="note-box">
+          <h3>Important Note</h3>
+          <p class="muted">
+            Please keep this receipt for booking confirmation, product handover, payment verification, and return process.
+          </p>
+        </div>
+
+        <p class="print-note">
+          This receipt was generated from the QuickRent user account.
+        </p>
+      `
+    );
   };
 
   const statusClass = (status) => {
@@ -159,7 +355,11 @@ const MyBookings = () => {
   }
 
   if (!user) {
-    return <p className="text-center text-gray-500 py-10">Please login to view bookings.</p>;
+    return (
+      <p className="text-center text-gray-500 py-10">
+        Please login to view bookings.
+      </p>
+    );
   }
 
   return (
@@ -170,11 +370,16 @@ const MyBookings = () => {
       </div>
 
       {bookings.length === 0 ? (
-        <p className="text-center text-gray-500 py-10">You have no bookings yet.</p>
+        <p className="text-center text-gray-500 py-10">
+          You have no bookings yet.
+        </p>
       ) : (
         <div className="space-y-6">
           {bookings.map((booking) => (
-            <div key={booking._id} className="border rounded-2xl p-5 hover:shadow-md transition">
+            <div
+              key={booking._id}
+              className="border rounded-2xl p-5 hover:shadow-md transition"
+            >
               <div className="flex flex-col md:flex-row gap-5 md:items-start md:justify-between">
                 <div className="flex gap-4">
                   <img
@@ -193,7 +398,8 @@ const MyBookings = () => {
                     </h3>
 
                     <p className="text-gray-600 mt-2">
-                      {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
+                      {new Date(booking.startDate).toLocaleDateString()} -{" "}
+                      {new Date(booking.endDate).toLocaleDateString()}
                     </p>
 
                     <p className="text-xl font-bold mt-3">
@@ -203,7 +409,11 @@ const MyBookings = () => {
                 </div>
 
                 <div className="md:text-right space-y-2">
-                  <span className={`inline-block px-4 py-1 rounded-full text-sm font-medium ${statusClass(booking.bookingStatus)}`}>
+                  <span
+                    className={`inline-block px-4 py-1 rounded-full text-sm font-medium ${statusClass(
+                      booking.bookingStatus
+                    )}`}
+                  >
                     {booking.bookingStatus}
                   </span>
 
@@ -221,7 +431,7 @@ const MyBookings = () => {
                   <FaPrint /> Print Receipt
                 </button>
 
-                {booking.bookingStatus === "Pending" && (
+                {cleanStatus(booking.bookingStatus) === "pending" && (
                   <button
                     onClick={() => cancelBooking(booking._id)}
                     className="flex items-center gap-2 bg-red-600 text-white px-5 py-3 rounded-xl hover:bg-red-700 transition"

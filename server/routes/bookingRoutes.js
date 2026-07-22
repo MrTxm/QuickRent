@@ -48,10 +48,10 @@ router.put("/cancel/:bookingId", async (req, res) => {
             });
         }
 
-        if (booking.bookingStatus === "Cancelled") {
+        if (["Cancelled", "Expired", "Returned"].includes(booking.bookingStatus)) {
             await session.abortTransaction();
             return res.status(400).json({
-                message: "Booking already cancelled"
+                message: "Booking is already closed"
             });
         }
 
@@ -68,11 +68,16 @@ router.put("/cancel/:bookingId", async (req, res) => {
             });
         }
 
-        product.available += booking.quantity;
-        await product.save({ session });
+        if (!booking.autoStockReleased) {
+            product.available += booking.quantity;
+            await product.save({ session });
+        }
 
         // Update booking status
         booking.bookingStatus = "Cancelled";
+        booking.paymentStatus = "Cancelled";
+        booking.autoStockReleased = true;
+        booking.stockReleasedAt = new Date();
         await booking.save({ session });
 
         await session.commitTransaction();

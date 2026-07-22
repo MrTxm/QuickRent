@@ -1,5 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
 const router = express.Router();
 
 const adminAuth = require("../middleware/adminAuth");
@@ -10,7 +13,41 @@ const User = require("../models/User");
 
 router.use(adminAuth);
 
-const cleanStatus = (value) => String(value || "Pending").toLowerCase();
+
+const uploadDir = path.join(__dirname, "../public/images");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || "");
+    const safeName = path
+      .basename(file.originalname || "image", ext)
+      .replace(/[^a-z0-9-_]/gi, "-")
+      .toLowerCase();
+    cb(null, `${Date.now()}-${safeName}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed"));
+    }
+    cb(null, true);
+  },
+});
+
+const uploadedImagePath = (req, fallback = "") => {
+  if (req.file) return `/images/${req.file.filename}`;
+  return fallback || "";
+};
+
+
+const cleanStatus = (value) => String(value || "Pending").trim().toLowerCase();
 const isPaid = (value) => cleanStatus(value) === "paid";
 const isAdvance = (booking) => {
   const method = String(booking.paymentMethod || "").toLowerCase();
@@ -18,6 +55,7 @@ const isAdvance = (booking) => {
   const advance = Number(booking.advancePaid || 0);
   return method.includes("advance") || (advance > 0 && advance < total);
 };
+const isExpired = (booking) => cleanStatus(booking.bookingStatus) === "expired" || cleanStatus(booking.paymentStatus) === "expired";
 const isCancelled = (booking) => ["cancelled", "failed"].includes(cleanStatus(booking.bookingStatus)) || ["cancelled", "failed"].includes(cleanStatus(booking.paymentStatus));
 
 const sum = (items, getter) => items.reduce((total, item) => total + Number(getter(item) || 0), 0);
@@ -41,7 +79,7 @@ const getDaysInMonth = (key) => {
 const getGroupKey = (booking) => booking.bookingReference || String(booking._id);
 
 const getBalanceAmount = (booking) => {
-  if (isCancelled(booking) || booking.bookingStatus === "Returned") return 0;
+  if (isCancelled(booking) || isExpired(booking) || cleanStatus(booking.bookingStatus) === "returned") return 0;
 
   const total = Number(booking.totalAmount || 0);
   const advance = Number(booking.advancePaid || 0);
@@ -52,21 +90,24 @@ const getBalanceAmount = (booking) => {
 };
 
 const getCollectedAmount = (booking) => {
-  if (isCancelled(booking)) return 0;
+  if (isCancelled(booking) || isExpired(booking)) return 0;
 
   const total = Number(booking.totalAmount || 0);
   const advance = Number(booking.advancePaid || 0);
   const damageCharge = Number(booking.damageCharge || 0);
+  const overdueCharge = Number(booking.overdueCharge || 0);
+  const extraCharges = damageCharge + overdueCharge;
 
   if (isAdvance(booking)) {
     const balance = Math.max(total - advance, 0);
-    return advance + (booking.balancePaid ? balance : 0) + damageCharge;
+    return advance + (booking.balancePaid ? balance : 0) + extraCharges;
   }
 
-  return isPaid(booking.paymentStatus) ? total + damageCharge : damageCharge;
+  return isPaid(booking.paymentStatus) ? total + extraCharges : extraCharges;
 };
 
 const getPaymentLabel = (booking) => {
+  if (isExpired(booking)) return "Expired";
   if (isCancelled(booking)) return "Cancelled";
 
   if (booking.balancePaid) return "Paid";
@@ -76,6 +117,100 @@ const getPaymentLabel = (booking) => {
   }
 
   return isPaid(booking.paymentStatus) ? "Paid" : "Pending";
+};
+
+const getStartOfToday = () => {
+  const now = new Date();
+  const sriLankaNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Colombo" }));
+  sriLankaNow.setHours(0, 0, 0, 0);
+  return sriLankaNow;
+};
+
+const releaseExpiredBookingStock = async (booking) => {
+  if (booking.autoStockReleased) return;
+
+  await Product.updateOne(
+    { product_id: booking.productId, category_id: Number(booking.categoryId) },
+    { $inc: { available: Number(booking.quantity || 0) } }
+  );
+};
+
+const syncOldBookingStatuses = async () => {
+  const today = getStartOfToday();
+  const now = new Date();
+
+  const expiredBookings = await Booking.find({
+    endDate: { $lt: today },
+    bookingStatus: { $regex: /^pending$/i },
+  });
+
+  for (const booking of expiredBookings) {
+    await releaseExpiredBookingStock(booking);
+
+    const paymentStatusUpdate = cleanStatus(booking.paymentStatus) === "pending"
+      ? { paymentStatus: "Expired" }
+      : {};
+
+    await Booking.updateOne(
+      { _id: booking._id },
+      {
+        $set: {
+          bookingStatus: "Expired",
+          autoStatusReason: "Booking period ended before product handover",
+          expiredAt: booking.expiredAt || now,
+          autoStockReleased: true,
+          stockReleasedAt: booking.stockReleasedAt || now,
+          ...paymentStatusUpdate,
+        },
+      },
+      { runValidators: false }
+    );
+  }
+
+  await Booking.updateMany(
+    {
+      endDate: { $lt: today },
+      bookingStatus: { $regex: /^confirmed$/i },
+    },
+    {
+      $set: {
+        bookingStatus: "Overdue",
+        autoStatusReason: "Confirmed booking passed the return date",
+        overdueAt: now,
+      },
+    },
+    { runValidators: false }
+  );
+};
+
+const sortBookingGroups = (groups) => {
+  const priority = {
+    overdue: 1,
+    pending: 2,
+    confirmed: 3,
+    returned: 4,
+    expired: 5,
+    cancelled: 6,
+    failed: 7,
+  };
+
+  return [...groups].sort((a, b) => {
+    const statusA = cleanStatus(a.bookingStatus);
+    const statusB = cleanStatus(b.bookingStatus);
+    const priorityA = priority[statusA] || 99;
+    const priorityB = priority[statusB] || 99;
+
+    if (priorityA !== priorityB) return priorityA - priorityB;
+
+    const dateA = new Date(a.startDate || a.createdAt || 0).getTime();
+    const dateB = new Date(b.startDate || b.createdAt || 0).getTime();
+
+    if (["returned", "expired", "cancelled", "failed"].includes(statusA)) {
+      return dateB - dateA;
+    }
+
+    return dateA - dateB;
+  });
 };
 
 const groupBookings = (bookings) => {
@@ -105,6 +240,7 @@ const groupBookings = (bookings) => {
       balanceAmount: 0,
       collectedAmount: 0,
       damageCharge: 0,
+      overdueCharge: 0,
       items: [],
     };
 
@@ -113,6 +249,7 @@ const groupBookings = (bookings) => {
     existing.balanceAmount += getBalanceAmount(booking);
     existing.collectedAmount += getCollectedAmount(booking);
     existing.damageCharge += Number(booking.damageCharge || 0);
+    existing.overdueCharge += Number(booking.overdueCharge || 0);
 
     // Group status is calculated after all items are collected.
 
@@ -131,37 +268,49 @@ const groupBookings = (bookings) => {
       bookingStatus: booking.bookingStatus,
       balancePaid: booking.balancePaid || false,
       balancePaidAt: booking.balancePaidAt || null,
+      returnedAt: booking.returnedAt || null,
+      updatedAt: booking.updatedAt || null,
       returnItems: booking.returnItems || [],
       damageCharge: booking.damageCharge || 0,
+      overdueCharge: booking.overdueCharge || 0,
+      overdueReason: booking.overdueReason || "",
     });
 
     map.set(key, existing);
   });
 
-  return [...map.values()].map((group) => {
+  const groups = [...map.values()].map((group) => {
     const statuses = group.items.map((item) => cleanStatus(item.bookingStatus));
     const labels = group.items.map((item) => getPaymentLabel(item));
 
     let bookingStatus = "Pending";
     if (statuses.length && statuses.every((status) => status === "returned")) {
       bookingStatus = "Returned";
+    } else if (statuses.length && statuses.every((status) => status === "expired")) {
+      bookingStatus = "Expired";
     } else if (statuses.length && statuses.every((status) => status === "cancelled" || status === "failed")) {
       bookingStatus = "Cancelled";
+    } else if (statuses.some((status) => status === "overdue")) {
+      bookingStatus = "Overdue";
     } else if (statuses.some((status) => status === "confirmed")) {
       bookingStatus = "Confirmed";
     } else if (statuses.some((status) => status === "pending")) {
       bookingStatus = "Pending";
+    } else if (statuses.some((status) => status === "expired")) {
+      bookingStatus = "Expired";
     } else if (statuses.some((status) => status === "returned")) {
       bookingStatus = "Returned";
     }
 
     const paymentLabel = labels.some((label) => label === "Balance Pending")
       ? "Balance Pending"
-      : labels.length && labels.every((label) => label === "Cancelled")
-        ? "Cancelled"
-        : labels.length && labels.every((label) => ["Paid", "Fully Paid"].includes(label))
-          ? "Paid"
-          : "Pending";
+      : labels.length && labels.every((label) => label === "Expired")
+        ? "Expired"
+        : labels.length && labels.every((label) => label === "Cancelled")
+          ? "Cancelled"
+          : labels.length && labels.every((label) => ["Paid", "Fully Paid"].includes(label))
+            ? "Paid"
+            : "Pending";
 
     return {
       ...group,
@@ -170,6 +319,8 @@ const groupBookings = (bookings) => {
       settlementStatus: group.balanceAmount <= 0 && ["Paid", "Cancelled"].includes(paymentLabel) ? "paid" : "pending",
     };
   });
+
+  return sortBookingGroups(groups);
 };
 
 const buildGroupQuery = (groupKey) => {
@@ -220,6 +371,8 @@ const buildRevenueDaily = (bookings, monthKeys) => {
 };
 
 const buildOverviewData = async () => {
+  await syncOldBookingStatuses();
+
   const [bookings, products, users, categories] = await Promise.all([
     Booking.find().sort({ createdAt: -1 }).lean(),
     Product.find().sort({ category_id: 1, product_id: 1 }).lean(),
@@ -233,6 +386,8 @@ const buildOverviewData = async () => {
 
   const pendingBookings = groups.filter((group) => cleanStatus(group.bookingStatus) === "pending").length;
   const confirmedBookings = groups.filter((group) => cleanStatus(group.bookingStatus) === "confirmed").length;
+  const overdueBookings = groups.filter((group) => cleanStatus(group.bookingStatus) === "overdue").length;
+  const expiredBookings = groups.filter((group) => cleanStatus(group.bookingStatus) === "expired").length;
   const returnedBookings = groups.filter((group) => cleanStatus(group.bookingStatus) === "returned").length;
   const cancelledBookings = groups.filter((group) => cleanStatus(group.bookingStatus) === "cancelled").length;
 
@@ -246,6 +401,8 @@ const buildOverviewData = async () => {
       totalBookings: bookings.length,
       pendingBookings,
       confirmedBookings,
+      overdueBookings,
+      expiredBookings,
       returnedBookings,
       cancelledBookings,
       totalProducts: products.length,
@@ -274,7 +431,9 @@ router.get("/overview", async (req, res) => {
 
 router.get("/bookings", async (req, res) => {
   try {
-    const bookings = await Booking.find().sort({ createdAt: -1 });
+    await syncOldBookingStatuses();
+
+    const bookings = await Booking.find().sort({ startDate: 1, endDate: 1, createdAt: -1 });
     res.json(bookings);
   } catch (error) {
     console.error("Admin Bookings Error:", error);
@@ -284,7 +443,9 @@ router.get("/bookings", async (req, res) => {
 
 router.get("/bookings/grouped", async (req, res) => {
   try {
-    const bookings = await Booking.find().sort({ createdAt: -1 });
+    await syncOldBookingStatuses();
+
+    const bookings = await Booking.find().sort({ startDate: 1, endDate: 1, createdAt: -1 });
     res.json(groupBookings(bookings));
   } catch (error) {
     console.error("Admin Grouped Bookings Error:", error);
@@ -296,7 +457,7 @@ router.put("/bookings/groups/:groupKey/status", async (req, res) => {
   try {
     const { bookingStatus } = req.body;
 
-    if (!["Pending", "Confirmed", "Returned", "Cancelled"].includes(bookingStatus)) {
+    if (!["Pending", "Confirmed", "Overdue", "Returned", "Expired", "Cancelled"].includes(bookingStatus)) {
       return res.status(400).json({ message: "Invalid booking status" });
     }
 
@@ -365,7 +526,7 @@ router.put("/bookings/groups/:groupKey/settle", async (req, res) => {
 
 router.post("/bookings/groups/:groupKey/return", async (req, res) => {
   try {
-    const { items = [] } = req.body;
+    const { items = [], overdueCharge = 0, overdueReason = "" } = req.body;
     const groupQuery = buildGroupQuery(req.params.groupKey);
     const bookings = await Booking.find(groupQuery).lean();
 
@@ -379,14 +540,28 @@ router.post("/bookings/groups/:groupKey/return", async (req, res) => {
       return res.status(404).json({ message: "Booking group not found" });
     }
 
-    if (grouped.bookingStatus !== "Confirmed") {
-      return res.status(400).json({ message: "Only confirmed bookings can be returned" });
+    if (!["Confirmed", "Overdue"].includes(grouped.bookingStatus)) {
+      return res.status(400).json({ message: "Only confirmed or overdue bookings can be returned" });
     }
 
     if (grouped.settlementStatus !== "paid") {
       return res.status(400).json({ message: "Collect and mark the balance payment as paid before return" });
     }
 
+    const isOverdueReturn = cleanStatus(grouped.bookingStatus) === "overdue";
+    const manualOverdueCharge = isOverdueReturn ? Number(overdueCharge || 0) : 0;
+    const manualOverdueReason = String(overdueReason || "").trim();
+
+    if (manualOverdueCharge < 0) {
+      return res.status(400).json({ message: "Overdue charge cannot be negative" });
+    }
+
+    if (!isOverdueReturn && Number(overdueCharge || 0) > 0) {
+      return res.status(400).json({ message: "Overdue charge can be added only for overdue bookings" });
+    }
+
+    const firstBookingId = String(bookings[0]._id);
+    const now = new Date();
     const rowsByBookingId = new Map(items.map((item) => [String(item.bookingId), item]));
 
     for (const booking of bookings) {
@@ -403,6 +578,7 @@ router.post("/bookings/groups/:groupKey/return", async (req, res) => {
       const goodQty = Number(row.goodQty || 0);
       const damagedQty = Number(row.damagedQty || 0);
       const damageCost = Number(row.damageCost || 0);
+      const overdueChargeForBooking = String(booking._id) === firstBookingId ? manualOverdueCharge : 0;
 
       if (goodQty < 0 || damagedQty < 0 || goodQty + damagedQty !== quantity) {
         return res.status(400).json({ message: `Good + damaged quantity must equal ${quantity} for ${booking.productName}` });
@@ -422,7 +598,10 @@ router.post("/bookings/groups/:groupKey/return", async (req, res) => {
         {
           $set: {
             bookingStatus: "Returned",
-            returnedAt: new Date(),
+            returnedAt: now,
+            overdueCharge: overdueChargeForBooking,
+            overdueReason: overdueChargeForBooking > 0 ? (manualOverdueReason || "Manual overdue charge") : "",
+            overdueChargeAddedAt: overdueChargeForBooking > 0 ? now : null,
             returnItems: [
               {
                 productId: booking.productId,
@@ -514,7 +693,7 @@ router.get("/products", async (req, res) => {
   }
 });
 
-router.post("/products", async (req, res) => {
+router.post("/products", upload.single("imageFile"), async (req, res) => {
   try {
     const body = req.body;
     const product = await Product.create({
@@ -523,7 +702,7 @@ router.post("/products", async (req, res) => {
       description: body.description || "No description added",
       pricePerDay: Number(body.pricePerDay || 0),
       category_id: Number(body.category_id),
-      image: body.image || "",
+      image: uploadedImagePath(req, body.image),
       available: Number(body.available || 0),
       damaged: Number(body.damaged || 0),
     });
@@ -535,25 +714,28 @@ router.post("/products", async (req, res) => {
   }
 });
 
-router.put("/products/:id", async (req, res) => {
+router.put("/products/:id", upload.single("imageFile"), async (req, res) => {
   try {
     const body = req.body;
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      {
-        product_id: body.product_id,
-        name: body.name,
-        description: body.description || "No description added",
-        pricePerDay: Number(body.pricePerDay || 0),
-        category_id: Number(body.category_id),
-        image: body.image || "",
-        available: Number(body.available || 0),
-        damaged: Number(body.damaged || 0),
-      },
-      { new: true, runValidators: true }
-    );
+    const product = await Product.findById(req.params.id);
 
     if (!product) return res.status(404).json({ message: "Product not found" });
+
+    product.product_id = body.product_id;
+    product.name = body.name;
+    product.description = body.description || "No description added";
+    product.pricePerDay = Number(body.pricePerDay || 0);
+    product.category_id = Number(body.category_id);
+    product.available = Number(body.available || 0);
+    product.damaged = Number(body.damaged || 0);
+
+    if (req.file) {
+      product.image = uploadedImagePath(req);
+    } else if (body.image !== undefined) {
+      product.image = body.image || "";
+    }
+
+    await product.save();
     res.json(product);
   } catch (error) {
     console.error("Admin Product Update Error:", error);
@@ -582,13 +764,14 @@ router.get("/categories", async (req, res) => {
   }
 });
 
-router.post("/categories", async (req, res) => {
+router.post("/categories", upload.single("imageFile"), async (req, res) => {
   try {
     const lastCategory = await Category.findOne().sort({ category_id: -1 });
     const category = await Category.create({
       category_id: Number(req.body.category_id || (lastCategory ? lastCategory.category_id + 1 : 1)),
       name: req.body.name,
       description: req.body.description || "",
+      image: uploadedImagePath(req, req.body.image),
     });
 
     res.status(201).json(category);
@@ -598,15 +781,23 @@ router.post("/categories", async (req, res) => {
   }
 });
 
-router.put("/categories/:id", async (req, res) => {
+router.put("/categories/:id", upload.single("imageFile"), async (req, res) => {
   try {
-    const category = await Category.findByIdAndUpdate(
-      req.params.id,
-      { category_id: Number(req.body.category_id), name: req.body.name, description: req.body.description || "" },
-      { new: true, runValidators: true }
-    );
+    const category = await Category.findById(req.params.id);
 
     if (!category) return res.status(404).json({ message: "Category not found" });
+
+    category.category_id = Number(req.body.category_id);
+    category.name = req.body.name;
+    category.description = req.body.description || "";
+
+    if (req.file) {
+      category.image = uploadedImagePath(req);
+    } else if (req.body.image !== undefined) {
+      category.image = req.body.image || "";
+    }
+
+    await category.save();
     res.json(category);
   } catch (error) {
     console.error("Admin Category Update Error:", error);
@@ -647,6 +838,64 @@ router.put("/users/:id/role", async (req, res) => {
   } catch (error) {
     console.error("Admin User Role Error:", error);
     res.status(500).json({ message: "Failed to update user role" });
+  }
+});
+
+
+router.put("/users/:id/active", async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isActive: Boolean(req.body.isActive) },
+      { new: true }
+    ).select("-password");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    console.error("Admin User Active Error:", error);
+    res.status(500).json({ message: "Failed to update user status" });
+  }
+});
+
+router.delete("/users/:id", async (req, res) => {
+  try {
+    const currentAdminId = req.headers["x-user-id"];
+    if (String(req.params.id) === String(currentAdminId)) {
+      return res.status(400).json({ message: "You cannot delete your own admin account" });
+    }
+
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({ success: true, message: "User deleted" });
+  } catch (error) {
+    console.error("Admin User Delete Error:", error);
+    res.status(500).json({ message: "Failed to delete user" });
+  }
+});
+
+router.put("/profile", async (req, res) => {
+  try {
+    const adminId = req.headers["x-user-id"];
+    const user = await User.findById(adminId);
+
+    if (!user) return res.status(404).json({ message: "Admin account not found" });
+
+    user.fullName = req.body.fullName || user.fullName;
+    user.email = req.body.email || user.email;
+
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+
+    await user.save();
+
+    const updated = await User.findById(adminId).select("-password");
+    res.json(updated);
+  } catch (error) {
+    console.error("Admin Profile Update Error:", error);
+    res.status(500).json({ message: error.message || "Failed to update admin profile" });
   }
 });
 

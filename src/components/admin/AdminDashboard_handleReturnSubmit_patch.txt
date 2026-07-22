@@ -1,0 +1,18 @@
+Find your handleReturnSubmit function and replace it with this version:
+
+const handleReturnSubmit = async (group, returnItems, extraCharges = {}) => {
+  try {
+    await api.post(`/api/admin/bookings/groups/${encodeURIComponent(group.groupKey)}/return`, {
+      items: returnItems,
+      overdueCharge: Number(extraCharges.overdueCharge || 0),
+      overdueReason: extraCharges.overdueReason || "",
+    });
+
+    setReturnBooking(null);
+    await refreshAfterAction();
+    alert("Return completed successfully");
+  } catch (err) {
+    console.log("RETURN ERROR:", err.response?.data || err.message);
+    alert(err.response?.data?.message || "Return process failed");
+  }
+};

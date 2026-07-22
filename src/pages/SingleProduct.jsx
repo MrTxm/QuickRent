@@ -461,7 +461,7 @@ Please provide more details.
               </h3>
 
               <p className="text-gray-600 mt-2 leading-relaxed">
-                You can place the order online and select advance payment. 30% of the total amount must be paid online as an advance.
+                You can place the order online and select advance payment. 50% of the total amount must be paid online as an advance.
               </p>
             </div>
 

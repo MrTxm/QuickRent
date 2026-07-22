@@ -15,6 +15,7 @@ const checkoutRoutes = require("./routes/checkoutRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const startBookingAutoStatusJob = require("./jobs/bookingAutoStatusJob");
 
 
 dotenv.config();
@@ -42,14 +43,14 @@ app.use("/api/reviews", reviewRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected Successfully"))
+  .then(() => {
+    console.log("MongoDB Connected Successfully");
+    startBookingAutoStatusJob();
+  })
   .catch((err) => console.log("MongoDB Error:", err));
 
 app.get("/", (req, res) => {
   res.send("QuickRent API is running...");
-});
-app.get("/", (req, res) => {
-  res.send("QuickRent backend is running");
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
