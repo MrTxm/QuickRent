@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { assets } from '../assets/assets'
+import { useNavigate } from 'react-router-dom'
 
 
 const Footer = () => {
-
+    const navigate = useNavigate()
     const [showMore, setShowMore] = useState(false)
 
 return (
@@ -46,10 +47,10 @@ return (
         </h3>
 
         <ul className="space-y-3 text-base">
-          <li><a href="#Home" className="hover:text-mainbtn">Home</a></li>
-          <li><a href="#Service" className="hover:text-mainbtn">Services</a></li>
-          <li><a href="#About" className="hover:text-mainbtn">About</a></li>
-          <li><a href="#Contact" className="hover:text-mainbtn">Contact Us</a></li>
+          <li><a  onClick={() => navigate("/")} className="hover:text-mainbtn">Home</a></li>
+          <li><a onClick={() => navigate("/service")} className="hover:text-mainbtn">Services</a></li>
+          <li><a onClick={() => navigate("/about")} className="hover:text-mainbtn">About</a></li>
+          <li><a onClick={() => navigate("/contact")} className="hover:text-mainbtn">Contact Us</a></li>
         </ul>
 
       </div>

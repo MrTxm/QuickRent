@@ -1,7 +1,11 @@
+import toast from "react-hot-toast";
+
 export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export const readAdmin = () => {
-  const saved = localStorage.getItem("quickrent_admin") || localStorage.getItem("user");
+  const saved =
+    localStorage.getItem("quickrent_admin") || localStorage.getItem("user");
+
   if (!saved) return null;
 
   try {
@@ -19,6 +23,7 @@ export const money = (value) =>
 
 export const shortDate = (value) => {
   if (!value) return "-";
+
   return new Date(value).toLocaleDateString("en-LK", {
     day: "2-digit",
     month: "short",
@@ -28,7 +33,11 @@ export const shortDate = (value) => {
 
 export const getMonthKey = (value) => {
   const date = value ? new Date(value) : new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}`;
 };
 
 export const initials = (name = "Admin") =>
@@ -40,27 +49,75 @@ export const initials = (name = "Admin") =>
     .join("") || "AD";
 
 export const statusClass = (status) =>
-  `admin-status admin-status-${String(status || "pending").toLowerCase().replace(/\s+/g, "-")}`;
+  `admin-status admin-status-${String(status || "pending")
+    .toLowerCase()
+    .replace(/\s+/g, "-")}`;
 
-export const normalizeStatus = (value) => String(value || "").toLowerCase().replace(/\s+/g, "-");
-export const isGroupPending = (group) => normalizeStatus(group?.bookingStatus) === "pending";
-export const isGroupConfirmed = (group) => normalizeStatus(group?.bookingStatus) === "confirmed";
-export const isGroupOverdue = (group) => normalizeStatus(group?.bookingStatus) === "overdue";
-export const isGroupReturned = (group) => normalizeStatus(group?.bookingStatus) === "returned";
-export const isGroupExpired = (group) => normalizeStatus(group?.bookingStatus) === "expired";
-export const isGroupCancelled = (group) => ["cancelled", "failed"].includes(normalizeStatus(group?.bookingStatus));
-export const isGroupHandoverActive = (group) => isGroupConfirmed(group) || isGroupOverdue(group);
-export const isGroupPaid = (group) =>
-  group?.settlementStatus === "paid" ||
-  normalizeStatus(group?.paymentLabel) === "paid" ||
-  normalizeStatus(group?.paymentLabel) === "fully-paid" ||
-  Number(group?.balanceAmount || 0) <= 0;
+export const normalizeStatus = (value) =>
+  String(value || "").toLowerCase().replace(/\s+/g, "-");
+
+export const isGroupPending = (group) =>
+  normalizeStatus(group?.bookingStatus) === "pending";
+
+export const isGroupConfirmed = (group) =>
+  normalizeStatus(group?.bookingStatus) === "confirmed";
+
+export const isGroupOverdue = (group) =>
+  normalizeStatus(group?.bookingStatus) === "overdue";
+
+export const isGroupReturned = (group) =>
+  normalizeStatus(group?.bookingStatus) === "returned";
+
+export const isGroupExpired = (group) =>
+  normalizeStatus(group?.bookingStatus) === "expired";
+
+export const isGroupCancelled = (group) =>
+  ["cancelled", "failed"].includes(normalizeStatus(group?.bookingStatus));
+
+export const isGroupHandoverActive = (group) =>
+  isGroupConfirmed(group) || isGroupOverdue(group);
+
+export const isGroupPaid = (group) => {
+  const settlementStatus = normalizeStatus(group?.settlementStatus);
+  const paymentLabel = normalizeStatus(group?.paymentLabel);
+  const paymentStatus = normalizeStatus(group?.paymentStatus);
+
+  const hasPendingPayment =
+    paymentLabel === "pending" ||
+    paymentStatus === "pending" ||
+    paymentLabel === "unpaid" ||
+    paymentStatus === "unpaid" ||
+    paymentLabel === "failed" ||
+    paymentStatus === "failed";
+
+  if (hasPendingPayment) return false;
+
+  return (
+    settlementStatus === "paid" ||
+    paymentLabel === "paid" ||
+    paymentLabel === "fully-paid" ||
+    paymentStatus === "paid" ||
+    group?.balancePaid === true
+  );
+};
+
+export const getDisplayBalance = (group) => {
+  const paid = isGroupPaid(group);
+  const totalAmount = Number(group?.totalAmount || 0);
+  const advancePaid = Number(group?.advancePaid || 0);
+
+  if (paid) return 0;
+
+  return Math.max(Number(group?.balanceAmount || totalAmount - advancePaid), 0);
+};
 
 export const calculateDays = (startDate, endDate) => {
   if (!startDate || !endDate) return 1;
+
   const start = new Date(startDate);
   const end = new Date(endDate);
   const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
   return Math.max(days, 1);
 };
 
@@ -74,14 +131,19 @@ export const safeText = (value) =>
 
 export const getImageSrc = (image) => {
   if (!image) return "";
-  if (String(image).startsWith("http") || String(image).startsWith("data:")) return image;
+
+  if (String(image).startsWith("http") || String(image).startsWith("data:")) {
+    return image;
+  }
+
   return `${API_URL}${image}`;
 };
 
 export const openPrintWindow = (title, bodyHtml) => {
   const printWindow = window.open("", "_blank", "width=950,height=750");
+
   if (!printWindow) {
-    alert("Popup blocked. Allow popups to print bills.");
+    toast.error("Popup blocked. Allow popups to print bills.");
     return;
   }
 
@@ -111,6 +173,7 @@ export const openPrintWindow = (title, bodyHtml) => {
       </body>
     </html>
   `);
+
   printWindow.document.close();
   printWindow.focus();
 };
@@ -129,6 +192,11 @@ export const printBookingBill = (group) => {
     )
     .join("");
 
+  const balance = getDisplayBalance(group);
+  const paymentLabel = isGroupPaid(group)
+    ? "Paid"
+    : group.paymentLabel || group.paymentStatus || "Pending";
+
   openPrintWindow(
     `QuickRent Bill ${group.bookingReference || group.groupKey}`,
     `
@@ -142,6 +210,7 @@ export const printBookingBill = (group) => {
           <p class="muted">Printed: ${new Date().toLocaleString("en-LK")}</p>
         </div>
       </div>
+
       <div class="grid">
         <div><strong>Customer:</strong> ${safeText(group.customerName)}</div>
         <div><strong>Email:</strong> ${safeText(group.gmail)}</div>
@@ -149,18 +218,41 @@ export const printBookingBill = (group) => {
         <div><strong>NIC:</strong> ${safeText(group.nic)}</div>
         <div><strong>Start:</strong> ${shortDate(group.startDate)}</div>
         <div><strong>End:</strong> ${shortDate(group.endDate)}</div>
-        <div style="grid-column:1 / -1"><strong>Address:</strong> ${safeText(group.address || "")}, ${safeText(group.city || "")}, ${safeText(group.province || "")}</div>
+        <div style="grid-column:1 / -1"><strong>Address:</strong> ${safeText(
+          group.address || ""
+        )}, ${safeText(group.city || "")}, ${safeText(
+      group.province || ""
+    )}</div>
       </div>
+
       <table>
-        <thead><tr><th>Product</th><th>ID</th><th>Qty</th><th>Days</th><th>Amount</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>ID</th>
+            <th>Qty</th>
+            <th>Days</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
         <tbody>${rows}</tbody>
       </table>
+
       <div class="total">
-        <div class="line"><span>Total</span><strong>${money(group.totalAmount)}</strong></div>
-        <div class="line"><span>Advance Paid</span><strong>${money(group.advancePaid)}</strong></div>
-        <div class="line"><span>Balance</span><strong>${money(group.balanceAmount)}</strong></div>
-        <div class="line"><span>Payment Status</span><strong>${safeText(group.paymentLabel || group.paymentStatus)}</strong></div>
+        <div class="line"><span>Total</span><strong>${money(
+          group.totalAmount
+        )}</strong></div>
+        <div class="line"><span>Advance Paid</span><strong>${money(
+          group.advancePaid
+        )}</strong></div>
+        <div class="line"><span>Balance</span><strong>${money(
+          balance
+        )}</strong></div>
+        <div class="line"><span>Payment Status</span><strong>${safeText(
+          paymentLabel
+        )}</strong></div>
       </div>
+
       <p class="print-note">This bill was generated from the QuickRent admin dashboard.</p>
     `
   );
@@ -168,23 +260,40 @@ export const printBookingBill = (group) => {
 
 export const printMonthlyHistory = (monthLabel, orders) => {
   const rows = orders
-    .map(
-      (group) => `
+    .map((group) => {
+      const balance = getDisplayBalance(group);
+
+      return `
         <tr>
           <td>${safeText(group.bookingReference || group.groupKey)}</td>
           <td>${safeText(group.customerName)}</td>
-          <td>${safeText((group.items || []).map((item) => `${item.productName} x ${item.quantity}`).join(", "))}</td>
+          <td>${safeText(
+            (group.items || [])
+              .map((item) => `${item.productName} x ${item.quantity}`)
+              .join(", ")
+          )}</td>
           <td>${money(group.totalAmount)}</td>
           <td>${money(group.advancePaid)}</td>
-          <td>${money(group.balanceAmount)}</td>
+          <td>${money(balance)}</td>
           <td>${safeText(group.bookingStatus)}</td>
-        </tr>`
-    )
+        </tr>`;
+    })
     .join("");
 
-  const total = orders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0);
-  const advance = orders.reduce((sum, order) => sum + Number(order.advancePaid || 0), 0);
-  const balance = orders.reduce((sum, order) => sum + Number(order.balanceAmount || 0), 0);
+  const total = orders.reduce(
+    (sum, order) => sum + Number(order.totalAmount || 0),
+    0
+  );
+
+  const advance = orders.reduce(
+    (sum, order) => sum + Number(order.advancePaid || 0),
+    0
+  );
+
+  const balance = orders.reduce(
+    (sum, order) => sum + Number(getDisplayBalance(order) || 0),
+    0
+  );
 
   openPrintWindow(
     `QuickRent Monthly Orders ${monthLabel}`,
@@ -199,49 +308,143 @@ export const printMonthlyHistory = (monthLabel, orders) => {
           <p class="muted">Printed: ${new Date().toLocaleString("en-LK")}</p>
         </div>
       </div>
+
       <table>
-        <thead><tr><th>Reference</th><th>Customer</th><th>Products</th><th>Total</th><th>Advance</th><th>Balance</th><th>Status</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Customer</th>
+            <th>Products</th>
+            <th>Total</th>
+            <th>Advance</th>
+            <th>Balance</th>
+            <th>Status</th>
+          </tr>
+        </thead>
         <tbody>${rows || `<tr><td colspan="7">No orders found</td></tr>`}</tbody>
       </table>
+
       <div class="total">
-        <div class="line"><span>Total Orders</span><strong>${orders.length}</strong></div>
-        <div class="line"><span>Total Amount</span><strong>${money(total)}</strong></div>
-        <div class="line"><span>Advance Collected</span><strong>${money(advance)}</strong></div>
-        <div class="line"><span>Balance Pending</span><strong>${money(balance)}</strong></div>
+        <div class="line"><span>Total Orders</span><strong>${
+          orders.length
+        }</strong></div>
+        <div class="line"><span>Total Amount</span><strong>${money(
+          total
+        )}</strong></div>
+        <div class="line"><span>Advance Collected</span><strong>${money(
+          advance
+        )}</strong></div>
+        <div class="line"><span>Balance Pending</span><strong>${money(
+          balance
+        )}</strong></div>
       </div>
     `
   );
 };
 
-export const buildNotifications = (overview, bookingGroups = [], products = [], users = []) => {
+export const buildNotifications = (
+  overview,
+  bookingGroups = [],
+  products = [],
+  users = []
+) => {
   const notifications = [];
   const stats = overview?.stats || {};
 
   const add = (type, title, message, actionTab = "dashboard", priority = 1) => {
-    notifications.push({ id: `${type}-${notifications.length}`, type, title, message, actionTab, priority });
+    notifications.push({
+      id: `${type}-${notifications.length}`,
+      type,
+      title,
+      message,
+      actionTab,
+      priority,
+    });
   };
 
   if (Number(stats.pendingBookings || 0) > 0) {
-    add("booking", "Pending bookings", `${stats.pendingBookings} booking group(s) waiting for handover.`, "bookings", 3);
+    add(
+      "booking",
+      "Pending bookings",
+      `${stats.pendingBookings} booking group(s) waiting for handover.`,
+      "bookings",
+      3
+    );
   }
+
   if (Number(stats.pendingPayment || 0) > 0) {
-    add("payment", "Pending payment", `${money(stats.pendingPayment)} still needs to be collected.`, "bookings", 3);
+    add(
+      "payment",
+      "Pending payment",
+      `${money(stats.pendingPayment)} still needs to be collected.`,
+      "bookings",
+      3
+    );
   }
 
-  const overdue = bookingGroups.filter((group) => normalizeStatus(group.bookingStatus) === "overdue");
-  if (overdue.length) add("overdue", "Overdue returns", `${overdue.length} booking group(s) passed the return date.`, "bookings", 4);
+  const overdue = bookingGroups.filter(
+    (group) => normalizeStatus(group.bookingStatus) === "overdue"
+  );
 
-  const expired = bookingGroups.filter((group) => normalizeStatus(group.bookingStatus) === "expired");
-  if (expired.length) add("expired", "Expired bookings", `${expired.length} pending booking group(s) expired automatically.`, "bookings", 2);
+  if (overdue.length) {
+    add(
+      "overdue",
+      "Overdue returns",
+      `${overdue.length} booking group(s) passed the return date.`,
+      "bookings",
+      4
+    );
+  }
+
+  const expired = bookingGroups.filter(
+    (group) => normalizeStatus(group.bookingStatus) === "expired"
+  );
+
+  if (expired.length) {
+    add(
+      "expired",
+      "Expired bookings",
+      `${expired.length} pending booking group(s) expired automatically.`,
+      "bookings",
+      2
+    );
+  }
 
   const lowStock = products.filter((product) => Number(product.available || 0) <= 2);
-  if (lowStock.length) add("stock", "Low stock alert", `${lowStock.length} product(s) have low available stock.`, "inventory", 2);
+
+  if (lowStock.length) {
+    add(
+      "stock",
+      "Low stock alert",
+      `${lowStock.length} product(s) have low available stock.`,
+      "inventory",
+      2
+    );
+  }
 
   const damaged = products.filter((product) => Number(product.damaged || 0) > 0);
-  if (damaged.length) add("damage", "Damaged stock", `${damaged.length} product type(s) have damaged stock.`, "damageStock", 2);
+
+  if (damaged.length) {
+    add(
+      "damage",
+      "Damaged stock",
+      `${damaged.length} product type(s) have damaged stock.`,
+      "damageStock",
+      2
+    );
+  }
 
   const activeUsers = users.filter((user) => user.isActive).length;
-  if (activeUsers) add("users", "Active users", `${activeUsers} user(s) are currently marked active.`, "customers", 1);
+
+  if (activeUsers) {
+    add(
+      "users",
+      "Active users",
+      `${activeUsers} user(s) are currently marked active.`,
+      "customers",
+      1
+    );
+  }
 
   return notifications.sort((a, b) => b.priority - a.priority);
 };
@@ -252,9 +455,8 @@ export const getDamageRows = (bookingGroups = []) => {
   bookingGroups.forEach((group) => {
     (group.items || []).forEach((item) => {
       (item.returnItems || []).forEach((returnItem, index) => {
-        // Only show products that admin explicitly marked as damaged in ReturnModal.
-        // Good returned products and pending return products must not appear here.
         const damagedQty = Number(returnItem.damagedQty || 0);
+
         if (damagedQty <= 0) return;
 
         rows.push({
@@ -274,5 +476,7 @@ export const getDamageRows = (bookingGroups = []) => {
     });
   });
 
-  return rows.sort((a, b) => new Date(b.returnedAt || 0) - new Date(a.returnedAt || 0));
+  return rows.sort(
+    (a, b) => new Date(b.returnedAt || 0) - new Date(a.returnedAt || 0)
+  );
 };

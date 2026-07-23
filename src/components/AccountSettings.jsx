@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -25,22 +26,22 @@ const AccountSettings = ({ user, setUser }) => {
             setUser(res.data);
             alert("Profile updated successfully!");
         } catch (err) {
-            alert("Failed to update profile");
+            toast.error("Failed to update profile");
         }
     };
 
     const handlePasswordChange = async (e) => {
         e.preventDefault();
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            return alert("Passwords do not match");
+            return toast.error("Passwords do not match");
         }
 
         try {
             await axios.put(`${API_URL}/api/auth/change-password/${user._id}`, passwordData);
-            alert("Password changed successfully!");
+            toast.success("Password changed successfully!");
             setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
         } catch (err) {
-            alert(err.response?.data?.message || "Failed to change password");
+            toast.error(err.response?.data?.message || "Failed to change password");
         }
     };
 

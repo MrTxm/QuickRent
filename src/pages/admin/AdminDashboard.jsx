@@ -14,6 +14,8 @@ import {
   isGroupExpired,
   isGroupHandoverActive,
   isGroupReturned,
+  isGroupOverdue,
+  isGroupConfirmed,
   money,
   readAdmin,
 } from "../../components/admin/adminHelpers";
@@ -260,73 +262,83 @@ const AdminDashboard = () => {
   };
 
   const markBalancePaid = async (group) => {
-    if (isGroupCancelled(group) || isGroupReturned(group) || isGroupExpired(group)) {
-      toast.error("This booking is already closed.");
-      return;
-    }
+  if (isGroupCancelled(group) || isGroupReturned(group) || isGroupExpired(group)) {
+    toast.error("This booking is already closed.");
+    return;
+  }
 
-    if (!isGroupHandoverActive(group)) {
-      toast.error("Confirm product handover first. Then collect the balance payment.");
-      return;
-    }
+  const canCollectPayment =
+    isGroupHandoverActive(group) || isGroupConfirmed(group) || isGroupOverdue(group);
 
-    const balance = Number(group.balanceAmount || 0);
-    const message = balance > 0
+  if (!canCollectPayment) {
+    toast.error("Confirm product handover first. Then collect the balance payment.");
+    return;
+  }
+
+  const totalAmount = Number(group.totalAmount || 0);
+  const advancePaid = Number(group.advancePaid || 0);
+  const balance = Number(group.balanceAmount || totalAmount - advancePaid || 0);
+
+  const message =
+    balance > 0
       ? `Mark balance ${money(balance)} as paid for ${group.bookingReference || group.groupKey}?`
       : `Mark this booking as fully paid?`;
 
-    if (!window.confirm(message)) return;
+  if (!window.confirm(message)) return;
 
-    try {
-      const res = await toast.promise(
-        api.put(`/api/admin/bookings/groups/${encodeURIComponent(group.groupKey)}/settle`, { paymentStatus: "Paid" }),
-        {
-          loading: "Marking payment as paid...",
-          success: "Payment marked as paid",
-          error: "Payment update failed",
-        }
-      );
-
-      await refreshAfterAction();
-
-      const paidGroup = res.data?.group || {
-        ...group,
-        paymentLabel: "Paid",
-        settlementStatus: "paid",
-        balanceAmount: 0,
-        items: (group.items || []).map((item) => ({
-          ...item,
-          paymentStatus: "Paid",
-          balancePaid: true,
-        })),
-      };
-
-      if (window.confirm("Payment is settled. Do you want to open the returned product check now?")) {
-        setReturnBooking(paidGroup);
+  try {
+    const res = await toast.promise(
+      api.put(`/api/admin/bookings/groups/${encodeURIComponent(group.groupKey)}/settle`, {
+        paymentStatus: "Paid",
+      }),
+      {
+        loading: "Marking payment as paid...",
+        success: "Payment marked as paid",
+        error: "Payment update failed",
       }
-    } catch (err) {
-      console.log("SETTLE PAYMENT ERROR:", err.response?.data || err.message);
-      toast.error(err.response?.data?.message || "Payment update failed");
-    }
-  };
+    );
 
-  const handleReturnSubmit = async (group, returnItems) => {
-    try {
-      await toast.promise(
-        api.post(`/api/admin/bookings/groups/${encodeURIComponent(group.groupKey)}/return`, { items: returnItems }),
-        {
-          loading: "Confirming return...",
-          success: "Return completed successfully",
-          error: "Return process failed",
-        }
-      );
-      setReturnBooking(null);
-      await refreshAfterAction();
-    } catch (err) {
-      console.log("RETURN ERROR:", err.response?.data || err.message);
-      toast.error(err.response?.data?.message || "Return process failed");
+    await refreshAfterAction();
+
+    const paidGroup = res.data?.group || {
+      ...group,
+      paymentLabel: "Paid",
+      paymentStatus: "Paid",
+      settlementStatus: "paid",
+      balanceAmount: 0,
+      balancePaid: true,
+      items: (group.items || []).map((item) => ({
+        ...item,
+        paymentStatus: "Paid",
+        balancePaid: true,
+      })),
+    };
+
+    if (window.confirm("Payment is settled. Do you want to open the returned product check now?")) {
+      setReturnBooking(paidGroup);
     }
-  };
+  } catch (err) {
+    console.log("SETTLE PAYMENT ERROR:", err.response?.data || err.message);
+    toast.error(err.response?.data?.message || "Payment update failed");
+  }
+};
+
+  const handleReturnSubmit = async (group, returnItems, extraCharges = {}) => {
+  try {
+    await api.post(`/api/admin/bookings/groups/${encodeURIComponent(group.groupKey)}/return`, {
+      items: returnItems,
+      overdueCharge: Number(extraCharges.overdueCharge || 0),
+      overdueReason: extraCharges.overdueReason || "",
+    });
+
+    setReturnBooking(null);
+    await refreshAfterAction();
+    alert("Return completed successfully");
+  } catch (err) {
+    console.log("RETURN ERROR:", err.response?.data || err.message);
+    toast.error(err.response?.data?.message || "Return process failed");
+  }
+};
 
   const buildProductFormData = () => {
     const formData = new FormData();

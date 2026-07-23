@@ -86,7 +86,7 @@ const Cart = ({ isOpen }) => {
       const message =
         error.response?.data?.message || "Cannot increase quantity";
 
-      toast.error(message);
+        toast.error(message);
 
       setStockWarning((prev) => ({
         ...prev,

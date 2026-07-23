@@ -146,14 +146,7 @@ const PaymentPage = () => {
       const res = await axios.post(`${API_URL}/api/bookings`, booking);
       toast.success(`Booking Successful!\nReference: ${res.data.bookingReference || bookingReference}`);
       setShowPopup(false);
-      navigate(`/order-success/${res.data.bookingReference || bookingReference}`, {
-        state: {
-          bookingReference: res.data.bookingReference || bookingReference,
-          totalAmount,
-          paymentMethod,
-          productName: product.name,
-        },
-      })
+      navigate(`/order-success`)
     } catch (error) {
       console.error(error.response?.data || error);
       toast.error(error.response?.data?.message || "Booking Failed");

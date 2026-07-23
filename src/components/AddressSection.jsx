@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaEdit } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -44,10 +45,10 @@ const AddressSection = ({ user }) => {
             fetchAddresses();
             setEditingAddress(null);
             setFormData({});
-            alert("Address saved successfully!");
+            toast.success("Address saved successfully!");
         } catch (err) {
             console.error(err);
-            alert("Failed to save address");
+            toast.error("Failed to save address");
         }
     };
 

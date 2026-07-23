@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { isGroupOverdue, money } from "./adminHelpers";
+import toast from "react-hot-toast";
 
 const SummaryLine = ({ label, value }) => (
   <div className="admin-summary-line">
@@ -64,23 +65,23 @@ const ReturnModal = ({ group, onClose, onSubmit }) => {
 
     for (const row of rows) {
       if (Number(row.goodQty || 0) + Number(row.damagedQty || 0) !== Number(row.quantity || 0)) {
-        alert(`Good + damaged quantity must equal rented quantity for ${row.productName}`);
+        toast.error(`Good + damaged quantity must equal rented quantity for ${row.productName}`);
         return;
       }
 
       if (Number(row.damagedQty || 0) > 0 && !String(row.damageReason || "").trim()) {
-        alert(`Add damage reason for ${row.productName}`);
+        toast.error(`Add damage reason for ${row.productName}`);
         return;
       }
     }
 
     if (totalOverdueCharge < 0) {
-      alert("Overdue charge cannot be negative");
+      toast.error("Overdue charge cannot be negative");
       return;
     }
 
     if (totalOverdueCharge > 0 && !String(overdueReason || "").trim()) {
-      alert("Add a reason/note for the overdue charge");
+      toast.error("Add a reason/note for the overdue charge");
       return;
     }
 
@@ -125,10 +126,14 @@ const ReturnModal = ({ group, onClose, onSubmit }) => {
               Charge
               <input
                 className="admin-input"
-                type="number"
-                min="0"
+                type="text"
+                inputMode="numeric"
+                placeholder="Enter overdue charge"
                 value={overdueCharge}
-                onChange={(e) => setOverdueCharge(e.target.value)}
+                onChange={(e) => {
+                  const onlyNumbers = e.target.value.replace(/[^0-9]/g, "");
+                  setOverdueCharge(onlyNumbers);
+                }}
               />
             </label>
             <label className="reason">
@@ -180,10 +185,14 @@ const ReturnModal = ({ group, onClose, onSubmit }) => {
                 Damage cost
                 <input
                   className="admin-input"
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Enter damage cost"
                   value={row.damageCost}
-                  onChange={(e) => updateRow(row.bookingId, "damageCost", e.target.value)}
+                  onChange={(e) => {
+                    const onlyNumbers = e.target.value.replace(/[^0-9]/g, "");
+                    updateRow(row.bookingId, "damageCost", onlyNumbers);
+                  }}
                 />
               </label>
 
