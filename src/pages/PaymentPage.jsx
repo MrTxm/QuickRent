@@ -127,93 +127,144 @@ const PaymentPage = () => {
   };
 
   const handleBooking = async (paymentMethod) => {
-    try {
-      const bookingReference = `QR-${Date.now()}`;
+  try {
+    const bookingReference = `QR-${Date.now()}`;
 
-      const booking = {
-        ...bookingData,
-        categoryId,
-        productId,
-        productName: product.name,
-        productImage: product.image,
-        quantity,
-        days,
-        totalAmount,
-        paymentMethod,
-        bookingReference,
-      };
+    const booking = {
+      ...bookingData,
+      categoryId,
+      productId,
+      productName: product.name,
+      productImage: product.image,
+      quantity,
+      days,
+      totalAmount,
+      paymentMethod,
+      bookingReference,
+    };
 
-      const res = await axios.post(`${API_URL}/api/bookings`, booking);
-      toast.success(`Booking Successful!\nReference: ${res.data.bookingReference || bookingReference}`);
-      setShowPopup(false);
-      navigate(`/order-success`)
-    } catch (error) {
-      console.error(error.response?.data || error);
-      toast.error(error.response?.data?.message || "Booking Failed");
-    }
-  };
+    const res = await axios.post(`${API_URL}/api/bookings`, booking);
 
-  const handleAdvancePayment = async () => {
-    try {
-      const amount = (product.pricePerDay * quantity * days * 0.5).toFixed(2);
-      const bookingReference = `QR-${Date.now()}`;
+    const finalReference = res.data.bookingReference || bookingReference;
 
-      const res = await axios.post(`${API_URL}/api/payment/generate`, {
-        orderId: bookingReference,
-        amount,
-        firstName: bookingData.customerName,
-        lastName: "",
-        email: bookingData.gmail,
-        phone: bookingData.contactNumber,
-        address: bookingData.address,
-        city: bookingData.city,
-      });
+    const successData = {
+      bookingReference: finalReference,
+      customerName: bookingData.customerName,
+      productName: product.name,
+      productImage: product.image,
+      quantity,
+      days,
+      startDate: bookingData.startDate,
+      endDate: bookingData.endDate,
+      totalAmount,
+      paymentMethod,
+      paymentStatus: paymentMethod === "On Site" ? "Pending" : "Paid",
+      bookingStatus: "Pending",
+    };
 
-      const payment = res.data;
+    localStorage.setItem("quickrent_last_order", JSON.stringify(successData));
 
-      window.payhere.onCompleted = async function (orderId) {
-        try {
-          await axios.post(`${API_URL}/api/bookings`, {
-            ...bookingData,
-            categoryId,
-            productId,
-            productName: product.name,
-            productImage: product.image,
-            quantity,
-            days,
-            totalAmount: product.pricePerDay * quantity * days,
-            paymentMethod: "Advance",
-            paymentStatus: "Paid",
-            bookingStatus: "Pending",
-            advancePaid: product.pricePerDay * quantity * days * 0.5,
-            transactionId: orderId,
-            bookingReference,
-          });
+    toast.success(`Booking Successful!\nReference: ${finalReference}`);
+    setShowPopup(false);
 
-          toast.success(`Booking Successful!\nReference: ${bookingReference}`);
-          setShowPopup(false);
-          navigate(`/order-success/${bookingReference}`, {
-            state: {
-              bookingReference,
-              totalAmount: product.pricePerDay * quantity * days,
-              paymentMethod: "Advance",
-              productName: product.name,
-            },
-          });
-        } catch (error) {
-          toast.error("Booking save failed after payment");
-        }
-      };
+    navigate("/order-success", {
+      state: successData,
+      replace: true,
+    });
+  } catch (error) {
+    console.error(error.response?.data || error);
+    toast.error(error.response?.data?.message || "Booking Failed");
+  }
+};
 
-      window.payhere.onDismissed = () => alert("Payment Cancelled");
-      window.payhere.onError = (error) => alert("Payment Error");
+ const handleAdvancePayment = async () => {
+  try {
+    const total = product.pricePerDay * quantity * days;
+    const advancePaid = total * 0.5;
+    const amount = advancePaid.toFixed(2);
+    const bookingReference = `QR-${Date.now()}`;
 
-      window.payhere.startPayment(payment);
-    } catch (error) {
-      console.log(error);
-      toast.error("Payment initiation failed");
-    }
-  };
+    const res = await axios.post(`${API_URL}/api/payment/generate`, {
+      orderId: bookingReference,
+      amount,
+      firstName: bookingData.customerName,
+      lastName: "",
+      email: bookingData.gmail,
+      phone: bookingData.contactNumber,
+      address: bookingData.address,
+      city: bookingData.city,
+    });
+
+    const payment = res.data;
+
+    window.payhere.onCompleted = async function (orderId) {
+      try {
+        await axios.post(`${API_URL}/api/bookings`, {
+          ...bookingData,
+          categoryId,
+          productId,
+          productName: product.name,
+          productImage: product.image,
+          quantity,
+          days,
+          totalAmount: total,
+          paymentMethod: "Advance",
+          paymentStatus: "Paid",
+          bookingStatus: "Pending",
+          advancePaid,
+          transactionId: orderId,
+          bookingReference,
+        });
+
+        const successData = {
+          bookingReference,
+          customerName: bookingData.customerName,
+          productName: product.name,
+          productImage: product.image,
+          quantity,
+          days,
+          startDate: bookingData.startDate,
+          endDate: bookingData.endDate,
+          totalAmount: total,
+          paymentMethod: "Advance",
+          paymentStatus: "Paid",
+          bookingStatus: "Pending",
+          advancePaid,
+        };
+
+        localStorage.setItem(
+          "quickrent_last_order",
+          JSON.stringify(successData)
+        );
+
+        toast.success(`Booking Successful!\nReference: ${bookingReference}`);
+        setShowPopup(false);
+
+        navigate("/order-success", {
+          state: successData,
+          replace: true,
+        });
+      } catch (error) {
+        console.error("BOOKING SAVE AFTER PAYMENT ERROR:", error.response?.data || error);
+        toast.error("Booking save failed after payment");
+      }
+    };
+
+    window.payhere.onDismissed = () => {
+      toast.error("Payment Cancelled");
+    };
+
+    window.payhere.onError = (error) => {
+      console.error("PAYHERE ERROR:", error);
+      toast.error("Payment Error");
+    };
+
+    window.payhere.startPayment(payment);
+  } catch (error) {
+    console.error("PAYMENT INITIATION ERROR:", error.response?.data || error);
+    toast.error("Payment initiation failed");
+  }
+};
 
   if (loading) return <div className="text-center py-20">Loading product...</div>;
 

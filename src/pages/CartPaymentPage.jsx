@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import GoBack from "../components/GoBack";
 import SavedAddressPicker from "../components/SavedAddressPicker";
+import { Commet } from "react-loading-indicators";
 import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -222,8 +223,15 @@ const CartPaymentPage = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <h1 className="text-4xl font-bold animate-pulse">Loading Checkout...</h1>
+            <div className="fixed inset-0 flex justify-center items-center bg-white z-50">
+                <Commet
+                color={[
+                    "#7a511d",
+                    "#a36c27",
+                    "#cc8731",
+                    "#d79f59",
+                ]}
+                />
             </div>
         );
     }

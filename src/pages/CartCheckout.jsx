@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { Commet } from "react-loading-indicators";
 import GoBack from "../components/GoBack";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -82,8 +83,15 @@ const CartCheckout = () => {
     );
     if (loading) {
         return (
-            <div className="text-center text-3xl mt-20">
-                Loading...
+             <div className="fixed inset-0 flex justify-center items-center bg-white z-50">
+                <Commet
+                color={[
+                    "#7a511d",
+                    "#a36c27",
+                    "#cc8731",
+                    "#d79f59",
+                ]}
+                />
             </div>
         );
     }
